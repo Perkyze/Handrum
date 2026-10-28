@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Drum Pads</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div id="start-overlay">
+    <button id="start-btn">Click to start audio</button>
+    <p>Browsers only allow sound after a click.</p>
+  </div>
+
+  <header>
+    <h1>Drum Pads</h1>
+    <div class="status">
+      <span id="midi-status" class="pill">MIDI: off</span>
+      <span id="serial-status" class="pill">Serial: off</span>
+      <span id="latency" class="pill" title="Audio output latency reported by the browser">Latency: –</span>
+    </div>
+  </header>
+
+  <main>
+    <section id="pads" aria-label="Drum pads"></section>
+
+    <aside>
+      <div class="panel">
+        <h2>Hardware input</h2>
+        <button id="midi-btn">Connect MIDI</button>
+        <ul id="midi-devices" class="devices"></ul>
+        <button id="serial-btn">Connect serial</button>
+        <p class="hint">MIDI: boards with native USB (ESP32-S3, RP2040). Serial: classic ESP32 sending raw MIDI bytes at 115200 baud.</p>
+        <label>MIDI channel
+          <select id="channel">
+            <option value="any">Any</option>
+          </select>
+        </label>
+      </div>
+
+      <div class="panel">
+        <h2>Sound</h2>
+        <label>Volume <input id="volume" type="range" min="0" max="1" step="0.01"></label>
+        <label>Velocity curve <span id="curve-val"></span>
+          <input id="curve" type="range" min="0.3" max="3" step="0.05">
+        </label>
+        <p class="hint">Below 1 = soft hits louder, above 1 = more dynamic. Drop an audio file on a pad to replace its sound.</p>
+        <button id="reset-btn" class="secondary">Reset mapping</button>
+      </div>
+
+      <div class="panel">
+        <h2>Monitor</h2>
+        <ol id="log"></ol>
+      </div>
+    </aside>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>
