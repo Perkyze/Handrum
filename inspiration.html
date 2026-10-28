@@ -1,0 +1,1725 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Drum Pads Inspiration</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0d0e11;
+  --panel: #16181d;
+  --panel-2: #1c1e23;
+  --stage: #0a0b0d;
+  --line: #2a2d35;
+  --text: #ecedf0;
+  --muted: #8b8f99;
+  --accent: #ff8a3d;
+  --ok: #4cc38a;
+  --radius: 16px;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font: 16px/1.55 "Space Grotesk", system-ui, -apple-system, "Segoe UI", sans-serif;
+  overflow-x: hidden;
+}
+a { color: var(--accent); text-decoration: none; }
+a:hover { text-decoration: underline; }
+code, .mono { font-family: "JetBrains Mono", ui-monospace, Consolas, monospace; font-size: 0.86em; }
+.wrap { max-width: 1240px; margin: 0 auto; padding: 0 16px; }
+
+/* Top bar */
+.top {
+  position: sticky; top: 0; z-index: 20;
+  background: color-mix(in srgb, var(--bg) 82%, transparent);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--line);
+}
+.top .wrap { display: flex; flex-wrap: wrap; gap: 10px 16px; align-items: center; justify-content: space-between; padding-top: 10px; padding-bottom: 10px; }
+.brand { font-weight: 700; letter-spacing: 0.02em; display: flex; align-items: center; gap: 10px; }
+.brand i { width: 12px; height: 12px; border-radius: 3px; background: var(--accent); box-shadow: 0 0 14px var(--accent); }
+.keys { display: flex; flex-wrap: wrap; gap: 6px; }
+.k {
+  --hue: 20;
+  min-width: 44px; padding: 5px 8px 4px; border-radius: 9px;
+  border: 1px solid hsl(var(--hue) 60% 50% / 0.45);
+  background: hsl(var(--hue) 30% 14%);
+  color: var(--text); font: inherit; font-size: 12px; line-height: 1.1; cursor: pointer;
+  touch-action: manipulation; user-select: none;
+}
+.k b { display: block; font-family: "JetBrains Mono", monospace; font-size: 14px; color: hsl(var(--hue) 90% 68%); }
+.btn {
+  border: 1px solid var(--line); background: var(--panel-2); color: var(--text);
+  font: inherit; font-size: 14px; padding: 7px 14px; border-radius: 999px; cursor: pointer;
+}
+.btn:hover { border-color: var(--muted); }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: #1a0d03; font-weight: 600; }
+.btn.on { border-color: #ff4d4d; color: #ff8080; }
+.top-actions { display: flex; gap: 8px; }
+
+/* Hero */
+.hero { padding: 64px 0 28px; }
+.eyebrow { color: var(--accent); font-family: "JetBrains Mono", monospace; font-size: 13px; letter-spacing: 0.08em; text-transform: uppercase; }
+h1 { font-size: clamp(38px, 7vw, 84px); line-height: 0.98; margin: 10px 0 18px; letter-spacing: -0.03em; }
+h1 span { color: var(--accent); }
+.lede { max-width: 720px; color: #c4c6cc; font-size: 18px; }
+.chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 22px; }
+.chip { border: 1px solid var(--line); border-radius: 999px; padding: 4px 12px; font-size: 13px; color: var(--muted); }
+.swatches { display: flex; gap: 12px; margin-top: 26px; flex-wrap: wrap; }
+.sw { width: 64px; display: flex; flex-direction: column; gap: 6px; font-size: 11px; color: var(--muted); font-family: "JetBrains Mono", monospace; }
+.sw i { height: 52px; border-radius: 12px; }
+
+/* Sections */
+section { padding: 52px 0 12px; }
+.sec-head { display: flex; align-items: baseline; gap: 14px; margin-bottom: 8px; flex-wrap: wrap; }
+.sec-head .num { font-family: "JetBrains Mono", monospace; color: var(--accent); font-size: 14px; }
+h2 { margin: 0; font-size: clamp(26px, 3.6vw, 40px); letter-spacing: -0.02em; }
+.sec-intro { color: var(--muted); max-width: 760px; margin: 0 0 24px; }
+
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 360px), 1fr)); gap: 18px; }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; display: flex; flex-direction: column; }
+@media (min-width: 820px) { .card.wide { grid-column: span 2; } }
+.stage { position: relative; aspect-ratio: 4 / 3; background: var(--stage); overflow: hidden; touch-action: manipulation; cursor: pointer; }
+.card.wide .stage { aspect-ratio: 16 / 8; }
+@media (max-width: 819px) { .card.wide .stage { aspect-ratio: 4 / 3; } }
+.stage canvas, .stage svg { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.stage .hint { position: absolute; left: 10px; bottom: 8px; font-size: 11px; color: #6c707a; font-family: "JetBrains Mono", monospace; pointer-events: none; }
+.body { padding: 16px 18px 18px; display: flex; flex-direction: column; gap: 8px; flex: 1; }
+h3 { margin: 0; font-size: 19px; }
+.body p { margin: 0; color: #b9bcc4; font-size: 15px; }
+.tags { display: flex; flex-wrap: wrap; gap: 6px; }
+.tag { font-size: 11px; font-family: "JetBrains Mono", monospace; padding: 2px 8px; border-radius: 6px; background: var(--panel-2); color: var(--muted); border: 1px solid var(--line); }
+.tag.quick { color: var(--ok); border-color: color-mix(in srgb, var(--ok) 40%, var(--line)); }
+.tag.mid { color: #f5c451; border-color: #5a4a20; }
+.tag.big { color: #ff7a7a; border-color: #5a2626; }
+.refs { font-size: 13px; color: var(--muted); margin-top: auto; padding-top: 6px; }
+.fallback { position: absolute; inset: 0; display: grid; place-items: center; color: var(--muted); padding: 20px; text-align: center; }
+
+/* Demo-specific */
+.hw-grid { position: absolute; inset: 14px; display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+.hw {
+  --hue: 20; position: relative; border-radius: 10px; overflow: hidden;
+  background: radial-gradient(120% 90% at 50% 0%, #2a2c31, #17181b 70%);
+  box-shadow: inset 0 1px 0 #3a3d44, inset 0 -6px 12px #0006, 0 3px 0 #050506;
+  display: flex; flex-direction: column; justify-content: space-between; padding: 8px;
+  user-select: none;
+}
+.hw .fill { position: absolute; inset: 0; transform-origin: bottom; transform: scaleY(0); background: linear-gradient(to top, hsl(var(--hue) 90% 55% / 0.85), hsl(var(--hue) 90% 60% / 0.15)); pointer-events: none; }
+.hw .led { width: 8px; height: 8px; border-radius: 50%; background: hsl(var(--hue) 40% 25%); position: relative; }
+.hw .lbl { position: relative; font-size: 11px; color: #c9cbd1; display: flex; justify-content: space-between; }
+.hw .lbl b { font-family: "JetBrains Mono", monospace; color: hsl(var(--hue) 80% 65%); }
+
+.kin { position: absolute; inset: 0; display: grid; place-items: center; text-align: center; }
+.kw { font-size: clamp(44px, 9vw, 92px); font-weight: 700; letter-spacing: -0.02em; line-height: 0.9; color: #3a3d44; }
+.ks { font-family: "JetBrains Mono", monospace; font-size: 12px; color: var(--muted); margin-top: 8px; }
+
+.stats { position: absolute; inset: 0; padding: 16px; display: grid; grid-template-rows: auto 1fr; gap: 12px; cursor: default; }
+.stat-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.stat { background: #121418; border: 1px solid var(--line); border-radius: 10px; padding: 8px 10px; }
+.stat small { color: var(--muted); font-size: 11px; display: block; }
+.stat b { font-size: clamp(20px, 3vw, 28px); font-family: "JetBrains Mono", monospace; }
+.bars { display: grid; gap: 5px; align-content: center; }
+.bar { display: grid; grid-template-columns: 76px 1fr 30px; gap: 8px; align-items: center; font-size: 12px; color: #c9cbd1; }
+.bar .track { height: 10px; background: #1b1d22; border-radius: 5px; overflow: hidden; }
+.bar .tf { height: 100%; width: 0; border-radius: 5px; transition: width 200ms ease-out; }
+.bar span:last-child { font-family: "JetBrains Mono", monospace; color: var(--muted); text-align: right; }
+
+.stage-ctrl { position: absolute; top: 10px; right: 10px; display: flex; gap: 6px; z-index: 2; }
+.stage-ctrl .btn { font-size: 12px; padding: 4px 10px; }
+
+/* Performance-mode banner */
+.perf-cta {
+  margin-top: 18px; border-radius: var(--radius); padding: 22px; border: 1px solid #4a2f1c;
+  background: radial-gradient(120% 140% at 0% 0%, #3a1f0d 0%, #16181d 60%);
+  display: flex; flex-wrap: wrap; gap: 14px 24px; align-items: center; justify-content: space-between;
+}
+.perf-cta h3 { font-size: 22px; }
+.perf-cta p { margin: 4px 0 0; color: #c4c6cc; max-width: 640px; }
+
+/* Mobbin board */
+.mob { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); padding: 16px 18px; display: flex; flex-direction: column; gap: 8px; }
+.mob .app { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
+.mob .app b { font-size: 17px; }
+.mob .app span { font-size: 12px; color: var(--muted); font-family: "JetBrains Mono", monospace; }
+.mob p { margin: 0; color: #b9bcc4; font-size: 15px; }
+.mob .steal { border-left: 3px solid var(--accent); padding-left: 10px; color: var(--text); font-size: 14px; }
+.mob .mini { height: 74px; border-radius: 10px; position: relative; overflow: hidden; }
+
+/* Table */
+.table-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: var(--radius); }
+table { border-collapse: collapse; width: 100%; min-width: 760px; font-size: 14px; }
+th, td { text-align: left; padding: 11px 14px; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { background: var(--panel-2); color: var(--muted); font-weight: 500; font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em; }
+tr:last-child td { border-bottom: 0; }
+td:first-child { font-weight: 600; white-space: nowrap; }
+.fit { font-family: "JetBrains Mono", monospace; font-size: 12px; white-space: nowrap; }
+
+/* Wiring */
+.two { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 420px), 1fr)); gap: 18px; }
+pre { margin: 0; background: #0a0b0d; border: 1px solid var(--line); border-radius: var(--radius); padding: 16px; overflow-x: auto; font-size: 13px; line-height: 1.6; color: #d6d8dd; }
+pre .c { color: #6c707a; }
+pre .s { color: #9fd49a; }
+pre .kw2 { color: #ff9e64; }
+.principles { margin: 0; padding: 0; list-style: none; display: grid; gap: 10px; }
+.principles li { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; color: #c4c6cc; font-size: 15px; }
+.principles b { color: var(--text); }
+
+/* Roadmap */
+.road { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr)); gap: 18px; }
+.lane { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); padding: 18px; }
+.lane h3 { display: flex; align-items: center; gap: 8px; }
+.lane h3 i { width: 10px; height: 10px; border-radius: 50%; }
+.lane ol { margin: 10px 0 0; padding-left: 20px; color: #c4c6cc; }
+.lane li { margin-bottom: 8px; }
+
+footer { padding: 48px 0 64px; color: var(--muted); font-size: 14px; }
+footer ul { columns: 2 300px; padding-left: 18px; }
+footer li { margin-bottom: 6px; break-inside: avoid; }
+
+/* Full-screen performance overlay */
+#perf { position: fixed; inset: 0; z-index: 100; background: #000; touch-action: none; }
+#perf[hidden] { display: none; }
+#perf canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+#perf .kin { pointer-events: none; }
+#perf .kw { font-size: clamp(64px, 16vw, 220px); color: #ffffff22; mix-blend-mode: screen; }
+#perf-close { position: absolute; top: 16px; right: 16px; z-index: 2; }
+.pf-hint { position: absolute; bottom: 18px; left: 0; right: 0; text-align: center; color: #ffffff66; font-size: 13px; pointer-events: none; font-family: "JetBrains Mono", monospace; }
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+}
+</style>
+</head>
+<body>
+
+<div class="top">
+  <div class="wrap">
+    <div class="brand"><i></i>Drum Pads · Inspiration</div>
+    <div class="keys" id="keys" aria-label="Play the pads"></div>
+    <div class="top-actions">
+      <button class="btn" id="mute">Sound on</button>
+      <button class="btn primary" data-perf>Performance mode</button>
+    </div>
+  </div>
+</div>
+
+<main class="wrap">
+  <header class="hero">
+    <div class="eyebrow">Moodboard · Oct 2026</div>
+    <h1>Make every hit <span>feel</span> like a hit.</h1>
+    <p class="lede">
+      Ideas for showing the drum, full-screen moments while you play, and playful ways to practise. Every demo on this page works:
+      press <b class="mono">A S D F J K L ;</b> (or tap a demo) and they all react to the same hit, the same way the real app's
+      <code>playPad()</code> could drive them.
+    </p>
+    <div class="chips">
+      <span class="chip">Live demos, no build step</span>
+      <span class="chip">Mobbin + web references</span>
+      <span class="chip">three.js · Canvas · WebGL · Web Audio</span>
+      <span class="chip">Pad colours match <code>PADS[].hue</code> in app.js</span>
+    </div>
+    <div class="swatches" id="swatches" aria-label="Pad colours"></div>
+  </header>
+
+  <!-- 01 -->
+  <section id="show">
+    <div class="sec-head"><span class="num">01</span><h2>Show the drum</h2></div>
+    <p class="sec-intro">Four ways to represent the instrument, from a literal 3D kit to a pad grid that feels like rubber. The key idea: the screen should mirror what the hands are doing, with velocity visible.</p>
+    <div class="grid">
+      <article class="card wide">
+        <div class="stage" id="d3d"><span class="hint">click a drum · or play the keys</span></div>
+        <div class="body">
+          <div class="tags"><span class="tag">three.js</span><span class="tag">WebGL</span><span class="tag big">big bet</span></div>
+          <h3>A real kit being played</h3>
+          <p>A 3D kit where sticks strike the drum you hit, heads ripple in proportion to velocity, cymbals wobble and the room light takes the pad's colour. Clicking a drum raycasts to it, so the 3D view is also an input. For the real version: load a GLTF kit (modelled in Blender or a CC0 asset), add <code>UnrealBloomPass</code> for glow, and let the camera slowly orbit between hits.</p>
+          <div class="refs">Refs: <a href="https://discourse.threejs.org/t/3d-drum-kit-configurator-l-www-drumstructor-com/21763">drumstructor 3D kit configurator</a> · <a href="https://discourse.threejs.org/t/playdrumsonline-com-an-online-rhythm-game/88205">playdrumsonline (three.js + PixiJS)</a> · <a href="https://threejs.org/docs/pages/UnrealBloomPass.html">UnrealBloomPass docs</a></div>
+        </div>
+      </article>
+
+      <article class="card">
+        <div class="stage" id="dmap"></div>
+        <div class="body">
+          <div class="tags"><span class="tag">SVG</span><span class="tag quick">quick win</span></div>
+          <h3>Top-down kit map</h3>
+          <p>A drummer's-eye view: pads laid out where they sit on a real kit, with key labels. Works as a layout option next to the grid, and as a teaching aid ("the hat is under your left hand").</p>
+          <div class="refs">Ref: <a href="https://tympanus.net/codrops/tag/instrument/">Codrops interactive instruments (animated SVG kit)</a></div>
+        </div>
+      </article>
+
+      <article class="card">
+        <div class="stage" id="dripple"><canvas></canvas></div>
+        <div class="body">
+          <div class="tags"><span class="tag">Canvas 2D</span><span class="tag">wave equation</span><span class="tag mid">medium</span></div>
+          <h3>Pads as a drum skin</h3>
+          <p>The whole pad area is one membrane. Each hit drops a wave where the pad sits, and waves from different pads interfere. Harder hits make bigger waves. A 120×90 height-field sim is cheap enough to run behind the existing grid.</p>
+        </div>
+      </article>
+
+      <article class="card">
+        <div class="stage" id="dhw"><div class="hw-grid"></div></div>
+        <div class="body">
+          <div class="tags"><span class="tag">CSS</span><span class="tag quick">quick win</span></div>
+          <h3>Rubber pads with velocity fill</h3>
+          <p>An upgrade of the current pad grid: soft rubber shading, a press-down offset, an LED, and a backlight that fills from the bottom to the hit's velocity, so you can <i>see</i> how hard you played. Tap low on a pad for soft, high for loud.</p>
+          <div class="refs">Feel ref: hardware pad controllers (MPC-style backlit pads)</div>
+        </div>
+      </article>
+    </div>
+  </section>
+
+  <!-- 02 -->
+  <section id="fullscreen">
+    <div class="sec-head"><span class="num">02</span><h2>Full-screen moments</h2></div>
+    <p class="sec-intro">Visual layers that make playing feel like a show. Each pad gets its own identity (colour, shape, motion), and velocity drives size and brightness. They all stack, so performance mode is just these layers at full screen.</p>
+    <div class="grid">
+      <article class="card">
+        <div class="stage" id="dburst"><canvas></canvas><span class="hint">tap anywhere</span></div>
+        <div class="body">
+          <div class="tags"><span class="tag">Canvas 2D</span><span class="tag quick">quick win</span></div>
+          <h3>A shape per sound</h3>
+          <p>Kick floods a circle, snare sprays lines, hats tick dots across, toms wipe bars, clap throws confetti, crash flashes the room. Each sound reads instantly without labels. This is the Patatap idea, applied to a drum kit.</p>
+          <div class="refs">Ref: <a href="https://www.creativeapplications.net/project/patatap-portable-animation-and-sound-kit-by-jonobr1-and-lullatone">Patatap by Jono Brandel & Lullatone (Two.js + Web Audio)</a></div>
+        </div>
+      </article>
+
+      <article class="card">
+        <div class="stage" id="dshader"><canvas></canvas></div>
+        <div class="body">
+          <div class="tags"><span class="tag">WebGL</span><span class="tag">GLSL</span><span class="tag mid">medium</span></div>
+          <h3>Shader backdrop</h3>
+          <p>A full-screen fragment shader with two inputs: <code>energy</code> (rises with each hit, decays) and <code>colour</code> (eases to the last pad). The kick also pushes a zoom "thump". Runs on the GPU, so it stays cheap at 4K.</p>
+          <div class="refs">Refs: <a href="https://tympanus.net/codrops/2023/02/07/audio-reactive-shaders-with-three-js-and-shader-park/">Audio-reactive shaders (Codrops)</a> · <a href="https://awesome.ecosyste.ms/projects/github.com%2Fwizgrav%2Fclubber">Clubber (audio → shader uniforms)</a></div>
+        </div>
+      </article>
+
+      <article class="card">
+        <div class="stage" id="ddots"><canvas></canvas></div>
+        <div class="body">
+          <div class="tags"><span class="tag">Canvas 2D</span><span class="tag quick">quick win</span></div>
+          <h3>Dot-matrix hit trail</h3>
+          <p>A scrolling LED-style trail of the last few seconds, coloured by pad. Calm when idle, busy when you play. A good replacement for the text "Monitor" log when you're performing rather than debugging.</p>
+          <div class="refs">Ref: <a href="https://mobbin.com/screens/198935b7-3834-4a4e-8c47-e75830b3d64e">Perplexity voice mode on Mobbin</a></div>
+        </div>
+      </article>
+
+      <article class="card">
+        <div class="stage" id="dtype"><div class="kin"><div><div class="kw">PLAY</div><div class="ks">press a key</div></div></div></div>
+        <div class="body">
+          <div class="tags"><span class="tag">Web Animations API</span><span class="tag quick">quick win</span></div>
+          <h3>Kinetic type</h3>
+          <p>The pad name slams onto the screen, scaled and skewed by velocity. Huge type reads from across the room, which is useful when the laptop sits behind the pads.</p>
+          <div class="refs">Ref: <a href="https://mobbin.com/screens/7879ac4d-8a50-4960-b5a6-506157d7d67b">Apple Music full-screen lyrics on Mobbin</a></div>
+        </div>
+      </article>
+    </div>
+
+    <div class="perf-cta">
+      <div>
+        <h3>Performance mode = shader + shapes + type, full screen</h3>
+        <p>The three layers above stacked into one full-screen view, with the Fullscreen API (plus Screen Wake Lock in the real app so the display stays on). Tap anywhere on a phone to play, using the 8 columns as pads.</p>
+      </div>
+      <button class="btn primary" data-perf>Try performance mode</button>
+    </div>
+  </section>
+
+  <!-- 03 -->
+  <section id="play">
+    <div class="sec-head"><span class="num">03</span><h2>Play &amp; learn</h2></div>
+    <p class="sec-intro">Interactivity that gives the player a goal: hit notes on time, build a loop, see your own stats. These turn the app from a sound box into something you come back to.</p>
+    <div class="grid">
+      <article class="card wide">
+        <div class="stage" id="dhigh"><canvas></canvas></div>
+        <div class="body">
+          <div class="tags"><span class="tag">Canvas 2D</span><span class="tag">timing judge</span><span class="tag big">big bet</span></div>
+          <h3>Groove highway</h3>
+          <p>A rock beat scrolls toward the line. Play kick, snare, closed hat and open hat (<b class="mono">A S D F</b>) as notes cross it, and each hit gets judged Perfect / Good / Early / Late, with a combo counter. With real pads this becomes a practice tool: timing stats per limb, slow-down mode and a groove library.</p>
+          <div class="refs">Refs: <a href="https://factmag.com/2015/10/13/refine-your-pad-drumming-skills-with-this-new-finger-training-app">Melodics (finger-drumming lessons with a scrolling note lane)</a> · <a href="https://mobbin.com/screens/22ea28df-1e0c-460d-b174-705d1d3194eb">Memrise timing track on Mobbin</a> · <a href="https://discourse.threejs.org/t/check-out-this-vr-music-visualization-named-moonrider/40608">Moonrider</a></div>
+        </div>
+      </article>
+
+      <article class="card">
+        <div class="stage" id="dwheel"><canvas></canvas><div class="stage-ctrl"><button class="btn" id="wheel-rec">● Record loop</button><button class="btn" id="wheel-clear">Clear</button></div></div>
+        <div class="body">
+          <div class="tags"><span class="tag">Canvas 2D</span><span class="tag">Tone.js later</span><span class="tag mid">medium</span></div>
+          <h3>Loop wheel</h3>
+          <p>Press record, play, and your hits get stamped onto a one-bar ring at 100 BPM (one ring per pad), then the bar loops back so you can layer on top. A circle shows a bar of music better than a strip: the downbeat is always at 12 o'clock.</p>
+          <div class="refs">Ref: <a href="https://developers.googleblog.com/en/introducing-chrome-music-lab/">Chrome Music Lab (Rhythm experiment)</a></div>
+        </div>
+      </article>
+
+      <article class="card">
+        <div class="stage" id="dstats">
+          <div class="stats">
+            <div class="stat-row">
+              <div class="stat"><small>Tempo</small><b id="st-bpm">–</b></div>
+              <div class="stat"><small>Hits</small><b id="st-hits">0</b></div>
+              <div class="stat"><small>Avg velocity</small><b id="st-vel">–</b></div>
+            </div>
+            <div class="bars" id="st-bars"></div>
+          </div>
+        </div>
+        <div class="body">
+          <div class="tags"><span class="tag">DOM</span><span class="tag quick">quick win</span></div>
+          <h3>Live session stats</h3>
+          <p>Tempo detected from your hits (try tapping a steady beat), hit counts per pad and average velocity. Cheap to build, and it doubles as a hardware check: a pad that never registers, or always hits at 127, shows up immediately.</p>
+        </div>
+      </article>
+    </div>
+  </section>
+
+  <!-- 04 -->
+  <section id="mobbin">
+    <div class="sec-head"><span class="num">04</span><h2>From Mobbin</h2></div>
+    <p class="sec-intro">Mobbin has almost no drum apps, so these are patterns borrowed from music, audio and learning apps. Each card links to the screen on Mobbin (screenshots aren't embedded: they're Mobbin's and the image links expire).</p>
+    <div class="grid" id="mob-grid"></div>
+  </section>
+
+  <!-- 05 -->
+  <section id="tech">
+    <div class="sec-head"><span class="num">05</span><h2>Technology options</h2></div>
+    <p class="sec-intro">The app is plain HTML/JS with no build step. Everything rated "fits now" can be added with a <code>&lt;script type="module"&gt;</code> and an import map. Anything that needs React or a bundler is marked.</p>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Tech</th><th>What it gives you</th><th>Fit for this app</th><th>Notes</th></tr></thead>
+        <tbody>
+          <tr><td>Canvas 2D</td><td>Bursts, ripples, dot trails, note highway, loop wheel</td><td class="fit">★★★ fits now</td><td>No dependency. Start here: 5 of the demos on this page use only Canvas 2D.</td></tr>
+          <tr><td>three.js</td><td>Real 3D kit, raycast hits, lighting, GLTF models</td><td class="fit">★★☆ fits now</td><td>Import as an ES module, no bundler needed. Heavier download, so lazy-load it only when the 3D view is opened.</td></tr>
+          <tr><td>UnrealBloomPass / pmndrs postprocessing</td><td>Glow, chromatic aberration, film grain on hits</td><td class="fit">★★☆ with three.js</td><td>Bloom needs tone mapping on the renderer. Don't mix three's EffectComposer with the pmndrs <code>postprocessing</code> package: pick one.</td></tr>
+          <tr><td>React Three Fiber + drei</td><td>Declarative three.js, a big ecosystem of helpers</td><td class="fit">★☆☆ needs migration</td><td>Requires React and a build step. Only worth it if the whole UI moves to React.</td></tr>
+          <tr><td>Raw WebGL / GLSL</td><td>Full-screen shader backdrops</td><td class="fit">★★★ fits now</td><td>One triangle and one fragment shader, about 60 lines (see the shader demo).</td></tr>
+          <tr><td>PixiJS</td><td>Fast 2D WebGL sprites, thousands of particles, drum notation</td><td class="fit">★★☆ fits now</td><td>Choose it if Canvas 2D particle counts start dropping frames. playdrumsonline uses it for its sheet music.</td></tr>
+          <tr><td>Two.js</td><td>Simple 2D shape scene graph (SVG / Canvas / WebGL)</td><td class="fit">★★☆ fits now</td><td>The library Patatap is built on. Good for crisp vector shapes.</td></tr>
+          <tr><td>GSAP</td><td>Timelines, easing, choreographed UI motion</td><td class="fit">★★☆ fits now</td><td>Nice for kinetic type and onboarding. The Web Animations API covers the simple cases for free.</td></tr>
+          <tr><td>Rive</td><td>Designer-made interactive animations with state machines</td><td class="fit">★★☆ fits now</td><td>Melodics uses Rive animations triggered alongside audio. Good for pad skins, characters and tutorials.</td></tr>
+          <tr><td>Tone.js</td><td>Musical clock (Transport), scheduling, metronome</td><td class="fit">★★★ for loops</td><td>Use its clock for the loop wheel and the highway. rAF timing (used in these demos) jitters by about 16 ms.</td></tr>
+          <tr><td>Web Audio AnalyserNode</td><td>FFT and waveform of the master output</td><td class="fit">★★☆ ambient only</td><td>Good for an ambient spectrum when using dropped-in samples. For per-pad visuals, use the hit event instead (exact, no lag).</td></tr>
+          <tr><td>Fullscreen + Screen Wake Lock</td><td>A real performance mode, screen never sleeps</td><td class="fit">★★★ fits now</td><td>Both are one-line browser APIs.</td></tr>
+          <tr><td>OffscreenCanvas + Worker</td><td>Rendering off the main thread</td><td class="fit">★★☆ when heavy</td><td>Web MIDI events arrive on the main thread, so a heavy 3D scene there could delay pad input. Move heavy rendering to a worker.</td></tr>
+          <tr><td>WebGPU</td><td>Next-gen GPU compute, millions of particles</td><td class="fit">★☆☆ later</td><td>three.js has a WebGPU renderer. Not needed for this app yet.</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- 06 -->
+  <section id="wire">
+    <div class="sec-head"><span class="num">06</span><h2>How it plugs into the app</h2></div>
+    <p class="sec-intro">Every input source (MIDI, serial, keyboard, mouse) already ends in <code>playPad(pad, vel)</code> in <code>web/app.js</code>. Broadcast one event there, and any visual layer can subscribe without touching the audio path.</p>
+    <div class="two">
+      <pre><span class="c">// web/app.js: in playPad(), right after flashPad(pad, vel)</span>
+window.<span class="kw2">dispatchEvent</span>(<span class="kw2">new</span> CustomEvent(<span class="s">'drumhit'</span>, {
+  detail: { id: pad.id, hue: pad.hue, vel, at: performance.now() },
+}));
+
+<span class="c">// web/visuals.js: each layer just listens</span>
+addEventListener(<span class="s">'drumhit'</span>, ({ detail }) =&gt; {
+  bursts.spawn(detail);      <span class="c">// shape per sound</span>
+  shader.pulse(detail);      <span class="c">// energy + colour</span>
+  highway.judge(detail);     <span class="c">// timing feedback</span>
+});
+
+<span class="c">// one shared loop, paused when hidden</span>
+<span class="kw2">function</span> frame(now) {
+  <span class="kw2">for</span> (<span class="kw2">const</span> layer <span class="kw2">of</span> layers) <span class="kw2">if</span> (layer.visible) layer.draw(now);
+  requestAnimationFrame(frame);
+}</pre>
+      <ul class="principles">
+        <li><b>Sound first.</b> Visuals never sit between the hit and the sound. Audio starts in <code>playPad</code> as it does now. Visuals only listen.</li>
+        <li><b>Drive visuals from hits, not FFT.</b> The hit event has the exact pad and velocity, with no added lag. Use the analyser only for ambient effects.</li>
+        <li><b>Velocity is the main parameter.</b> Map it to size, brightness, particle count and camera shake. That's what makes soft and hard hits look different.</li>
+        <li><b>Every pad has an identity:</b> a hue (already in <code>PADS</code>), a shape and a motion.</li>
+        <li><b>Photosensitivity.</b> Cap full-screen flashes at 3 per second, honour <code>prefers-reduced-motion</code> (this page does), and add a "Calm visuals" toggle.</li>
+        <li><b>Protect latency.</b> Use one rAF loop, pause what's off screen, cap devicePixelRatio at 2, and keep watching the latency pill while visuals run.</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- 07 -->
+  <section id="roadmap">
+    <div class="sec-head"><span class="num">07</span><h2>Suggested order</h2></div>
+    <p class="sec-intro">Ordered by impact per evening of work. The quick wins all reuse the same hit event, so the first one also sets up the rest.</p>
+    <div class="road">
+      <div class="lane">
+        <h3><i style="background:var(--ok)"></i>Quick wins</h3>
+        <ol>
+          <li><code>drumhit</code> event + <code>visuals.js</code> with one rAF loop</li>
+          <li>Velocity fill + press-down on existing pads</li>
+          <li>Shape-burst canvas behind the pad grid</li>
+          <li>Kinetic pad name and the dot trail in place of the monitor</li>
+          <li>Session stats (tempo, counts, avg velocity)</li>
+        </ol>
+      </div>
+      <div class="lane">
+        <h3><i style="background:#f5c451"></i>Next</h3>
+        <ol>
+          <li>Performance mode: shader + shapes + type, Fullscreen + Wake Lock, Calm toggle</li>
+          <li>Loop wheel on the Tone.js Transport</li>
+          <li>Top-down kit map as an alternative layout</li>
+          <li>Membrane ripple behind the grid</li>
+        </ol>
+      </div>
+      <div class="lane">
+        <h3><i style="background:#ff7a7a"></i>Big bets</h3>
+        <ol>
+          <li>3D kit: GLTF model, animated sticks, bloom, lazy-loaded, rendered in a worker</li>
+          <li>Groove highway with a groove library and per-pad timing stats</li>
+          <li>Rive pad skins and animated tutorials</li>
+        </ol>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <b style="color:var(--text)">Sources</b>
+    <ul>
+      <li><a href="https://mobbin.com/screens/198935b7-3834-4a4e-8c47-e75830b3d64e">Mobbin: Perplexity voice mode</a></li>
+      <li><a href="https://mobbin.com/screens/7879ac4d-8a50-4960-b5a6-506157d7d67b">Mobbin: Apple Music lyrics</a></li>
+      <li><a href="https://mobbin.com/screens/22ea28df-1e0c-460d-b174-705d1d3194eb">Mobbin: Memrise timing exercise</a></li>
+      <li><a href="https://www.creativeapplications.net/project/patatap-portable-animation-and-sound-kit-by-jonobr1-and-lullatone">Patatap on CreativeApplications</a> · <a href="https://en.wikipedia.org/wiki/Patatap">Wikipedia</a></li>
+      <li><a href="https://developers.googleblog.com/en/introducing-chrome-music-lab/">Introducing Chrome Music Lab</a></li>
+      <li><a href="https://rive.app/blog/melodics-reinvents-music-learning-with-interactive-design">Rive × Melodics case study</a></li>
+      <li><a href="https://factmag.com/2015/10/13/refine-your-pad-drumming-skills-with-this-new-finger-training-app">FACT: Melodics finger-drumming app</a></li>
+      <li><a href="https://discourse.threejs.org/t/playdrumsonline-com-an-online-rhythm-game/88205">playdrumsonline.com (three.js forum)</a></li>
+      <li><a href="https://discourse.threejs.org/t/3d-drum-kit-configurator-l-www-drumstructor-com/21763">drumstructor 3D drum kit configurator</a></li>
+      <li><a href="https://tympanus.net/codrops/2023/02/07/audio-reactive-shaders-with-three-js-and-shader-park/">Codrops: audio-reactive shaders with three.js</a></li>
+      <li><a href="https://tympanus.net/codrops/?p=95714">Codrops: 3D audio visualizer with three.js, GSAP & Web Audio</a></li>
+      <li><a href="https://tympanus.net/codrops/tag/instrument/">Codrops: interactive instruments</a></li>
+      <li><a href="https://threejs.org/docs/pages/UnrealBloomPass.html">three.js UnrealBloomPass</a></li>
+      <li><a href="https://awesome.ecosyste.ms/projects/github.com%2Fwizgrav%2Fclubber">Clubber</a> · <a href="https://npmjs.com/package/gl-audio-analyser">gl-audio-analyser</a></li>
+      <li><a href="https://discourse.threejs.org/t/check-out-this-vr-music-visualization-named-moonrider/40608">Moonrider VR music visualization</a></li>
+    </ul>
+  </footer>
+</main>
+
+<div id="perf" hidden>
+  <canvas class="pf-shader"></canvas>
+  <canvas class="pf-burst"></canvas>
+  <div class="kin"><div><div class="kw"></div><div class="ks"></div></div></div>
+  <button class="btn" id="perf-close">Exit (Esc)</button>
+  <div class="pf-hint">A S D F J K L ;  ·  or tap: the screen is 8 columns</div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+'use strict';
+
+// ---------------------------------------------------------------------------
+// Pads: same ids, keys and hues as web/app.js
+// ---------------------------------------------------------------------------
+const PADS = [
+  { id: 'kick',  name: 'Kick',       key: 'a', hue: 15 },
+  { id: 'snare', name: 'Snare',      key: 's', hue: 40 },
+  { id: 'chh',   name: 'Closed Hat', key: 'd', hue: 60 },
+  { id: 'ohh',   name: 'Open Hat',   key: 'f', hue: 80 },
+  { id: 'tomL',  name: 'Low Tom',    key: 'j', hue: 190 },
+  { id: 'tomH',  name: 'High Tom',   key: 'k', hue: 210 },
+  { id: 'clap',  name: 'Clap',       key: 'l', hue: 280 },
+  { id: 'crash', name: 'Crash',      key: ';', hue: 320 },
+];
+const PAD = Object.fromEntries(PADS.map(p => [p.id, p]));
+const calm = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const hsl = (h, s = 80, l = 60, a = 1) => `hsla(${h},${s}%,${l}%,${a})`;
+const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
+
+function hslToRgb(h, s, l) {
+  const f = n => {
+    const k = (n + h / 30) % 12;
+    return l - s * Math.min(l, 1 - l) * Math.max(-1, Math.min(k - 3, 9 - k, 1));
+  };
+  return [f(0), f(8), f(4)];
+}
+
+function fit(c) {
+  const d = Math.min(window.devicePixelRatio || 1, 2);
+  const w = Math.max(1, Math.round(c.clientWidth * d));
+  const h = Math.max(1, Math.round(c.clientHeight * d));
+  if (c.width !== w || c.height !== h) { c.width = w; c.height = h; }
+  return [w, h, d];
+}
+
+// ---------------------------------------------------------------------------
+// Audio: a tiny synth kit so the moodboard is playable on its own
+// ---------------------------------------------------------------------------
+let ac = null, master = null, noiseBuf = null, muted = false;
+
+function ensureAudio() {
+  if (!ac) {
+    ac = new (window.AudioContext || window.webkitAudioContext)();
+    master = ac.createGain();
+    master.gain.value = 0.55;
+    master.connect(ac.destination);
+  }
+  if (ac.state === 'suspended') ac.resume();
+}
+function envGain(t, peak, decay) {
+  const g = ac.createGain();
+  g.gain.setValueAtTime(Math.max(0.002, peak), t);
+  g.gain.exponentialRampToValueAtTime(0.001, t + decay);
+  g.connect(master);
+  return g;
+}
+function noise() {
+  if (!noiseBuf) {
+    noiseBuf = ac.createBuffer(1, ac.sampleRate * 2, ac.sampleRate);
+    const d = noiseBuf.getChannelData(0);
+    for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+  }
+  const s = ac.createBufferSource();
+  s.buffer = noiseBuf;
+  return s;
+}
+function filt(type, freq, q = 1) {
+  const f = ac.createBiquadFilter();
+  f.type = type; f.frequency.value = freq; f.Q.value = q;
+  return f;
+}
+function tone(t, a, type, from, to, dur) {
+  const o = ac.createOscillator();
+  o.type = type;
+  o.frequency.setValueAtTime(from, t);
+  o.frequency.exponentialRampToValueAtTime(to, t + dur * 0.4);
+  o.connect(envGain(t, a, dur));
+  o.start(t); o.stop(t + dur + 0.05);
+}
+function hiss(t, a, type, freq, dur, q) {
+  const n = noise();
+  n.connect(filt(type, freq, q)).connect(envGain(t, a, dur));
+  n.start(t); n.stop(t + dur + 0.05);
+}
+const VOICES = {
+  kick:  (t, a) => tone(t, a, 'sine', 150, 45, 0.45),
+  snare: (t, a) => { hiss(t, a * 0.6, 'highpass', 1500, 0.2); tone(t, a * 0.45, 'triangle', 230, 170, 0.12); },
+  chh:   (t, a) => hiss(t, a * 0.35, 'highpass', 8000, 0.05),
+  ohh:   (t, a) => hiss(t, a * 0.3, 'highpass', 7500, 0.35),
+  tomL:  (t, a) => tone(t, a * 0.8, 'sine', 170, 95, 0.35),
+  tomH:  (t, a) => tone(t, a * 0.8, 'sine', 250, 150, 0.28),
+  clap:  (t, a) => { for (let i = 0; i < 3; i++) hiss(t + i * 0.012, a * 0.5, 'bandpass', 1200, i === 2 ? 0.18 : 0.03, 0.8); },
+  crash: (t, a) => hiss(t, a * 0.28, 'highpass', 5000, 1.4),
+};
+
+// ---------------------------------------------------------------------------
+// Hit bus: every input calls hit(), every demo subscribes with onHit()
+// ---------------------------------------------------------------------------
+const listeners = [];
+const onHit = fn => listeners.push(fn);
+
+function hit(id, vel = 100, src = 'ui') {
+  const pad = PAD[id];
+  vel = clamp(Math.round(vel), 1, 127);
+  ensureAudio();
+  if (!muted) VOICES[id](ac.currentTime, Math.pow(vel / 127, 1.2));
+  const now = performance.now();
+  for (const fn of listeners) fn(pad, vel, src, now);
+}
+
+addEventListener('keydown', e => {
+  if (e.repeat || e.ctrlKey || e.metaKey || e.altKey) return;
+  if (e.target.closest && e.target.closest('input, textarea, select')) return;
+  const pad = PADS.find(p => p.key === e.key.toLowerCase());
+  if (pad) { e.preventDefault(); hit(pad.id, 90 + Math.random() * 37, 'key'); }
+});
+
+// Top bar keys and swatches
+const keysEl = document.getElementById('keys');
+const swEl = document.getElementById('swatches');
+for (const p of PADS) {
+  const b = document.createElement('button');
+  b.className = 'k';
+  b.style.setProperty('--hue', p.hue);
+  b.innerHTML = `<b>${p.key.toUpperCase()}</b>${p.name.replace(' Hat', '').replace(' Tom', '')}`;
+  b.addEventListener('pointerdown', e => { e.preventDefault(); hit(p.id, 110, 'ui'); });
+  b.dataset.pad = p.id;
+  keysEl.appendChild(b);
+
+  const s = document.createElement('div');
+  s.className = 'sw';
+  s.innerHTML = `<i style="background:hsl(${p.hue} 85% 55%)"></i>${p.name}`;
+  swEl.appendChild(s);
+}
+onHit(pad => {
+  keysEl.querySelector(`[data-pad="${pad.id}"]`).animate(
+    [{ background: hsl(pad.hue, 80, 45), transform: 'translateY(1px)' }, { background: hsl(pad.hue, 30, 14), transform: 'none' }],
+    { duration: 260, easing: 'ease-out' });
+});
+
+const muteBtn = document.getElementById('mute');
+muteBtn.addEventListener('click', () => {
+  muted = !muted;
+  muteBtn.textContent = muted ? 'Sound off' : 'Sound on';
+  muteBtn.classList.toggle('on', muted);
+});
+
+// ---------------------------------------------------------------------------
+// One shared animation loop; demos only draw while on screen
+// ---------------------------------------------------------------------------
+const frames = [];
+let lastFrame = performance.now();
+function frame(now) {
+  const dt = Math.min(0.05, (now - lastFrame) / 1000);
+  lastFrame = now;
+  for (const f of frames) if (f.visible) f.draw(now, dt);
+  requestAnimationFrame(frame);
+}
+function register(el, r) {
+  r.visible = false;
+  if (el) new IntersectionObserver(([en]) => { r.visible = en.isIntersecting; }).observe(el);
+  frames.push(r);
+  return r;
+}
+// Pad from a horizontal position: 8 equal columns
+const padAtX = (x, w) => PADS[clamp(Math.floor(x / w * 8), 0, 7)];
+
+// ---------------------------------------------------------------------------
+// 01a  3D kit (three.js)
+// ---------------------------------------------------------------------------
+(function threeKit() {
+  const el = document.getElementById('d3d');
+  if (!window.THREE) {
+    el.insertAdjacentHTML('beforeend', '<div class="fallback">three.js could not load (offline?). The other demos still work.</div>');
+    return;
+  }
+  const T = THREE;
+  const renderer = new T.WebGLRenderer({ antialias: true });
+  renderer.setPixelRatio(Math.min(devicePixelRatio || 1, 2));
+  renderer.setClearColor(0x0a0b0d);
+  el.prepend(renderer.domElement);
+
+  const scene = new T.Scene();
+  scene.fog = new T.Fog(0x0a0b0d, 7, 14);
+  const cam = new T.PerspectiveCamera(36, 2, 0.1, 50);
+  const camBase = new T.Vector3(0, 2.9, 5.4);
+  const look = new T.Vector3(0, 0.6, 0);
+
+  scene.add(new T.HemisphereLight(0xffffff, 0x1a1a24, 0.55));
+  const sun = new T.DirectionalLight(0xffffff, 0.85);
+  sun.position.set(3, 6, 4);
+  scene.add(sun);
+  const flash = new T.PointLight(0xff8a3d, 0, 9);
+  flash.position.set(0, 2.6, 2);
+  scene.add(flash);
+
+  const floor = new T.Mesh(new T.CircleGeometry(4.5, 64), new T.MeshStandardMaterial({ color: 0x15161a, roughness: 1 }));
+  floor.rotation.x = -Math.PI / 2;
+  floor.position.y = -0.9;
+  scene.add(floor);
+
+  const chrome = new T.MeshStandardMaterial({ color: 0xd8d8d8, metalness: 0.9, roughness: 0.25 });
+  const pickables = [];
+  const instruments = {};
+
+  function stand(x, z, top) {
+    const h = top + 0.9;
+    const m = new T.Mesh(new T.CylinderGeometry(0.025, 0.025, h, 8), chrome);
+    m.position.set(x, -0.9 + h / 2, z);
+    scene.add(m);
+  }
+
+  function drum(name, { r, h, pos, tilt = 0, hue, facing = false, pad }) {
+    const g = new T.Group();
+    g.position.copy(pos);
+    if (facing) g.rotation.x = Math.PI / 2; else g.rotation.x = tilt;
+    const color = new T.Color().setHSL(hue / 360, 0.6, 0.42);
+    const shell = new T.Mesh(new T.CylinderGeometry(r, r, h, 64, 1, true),
+      new T.MeshStandardMaterial({ color, metalness: 0.35, roughness: 0.3, side: T.DoubleSide }));
+    g.add(shell);
+    for (const s of [1, -1]) {
+      const rim = new T.Mesh(new T.TorusGeometry(r, 0.03, 10, 64), chrome);
+      rim.rotation.x = Math.PI / 2;
+      rim.position.y = s * h / 2;
+      g.add(rim);
+    }
+    for (let i = 0; i < 8; i++) {
+      const a = i / 8 * Math.PI * 2;
+      const lug = new T.Mesh(new T.BoxGeometry(0.05, h * 0.5, 0.05), chrome);
+      lug.position.set(Math.cos(a) * (r + 0.02), 0, Math.sin(a) * (r + 0.02));
+      g.add(lug);
+    }
+    const headGeo = new T.RingGeometry(0.0001, r, 64, 22);
+    const head = new T.Mesh(headGeo, new T.MeshStandardMaterial({ color: 0xefece4, roughness: 0.75, side: T.DoubleSide }));
+    head.rotation.x = -Math.PI / 2;
+    head.position.y = h / 2 + 0.001;
+    g.add(head);
+    g.userData.pad = pad;
+    scene.add(g);
+    pickables.push(g);
+    if (!facing) stand(pos.x, pos.z, pos.y);
+    const inst = { kind: 'drum', g, head, base: headGeo.attributes.position.array.slice(), r, h, amp: 0, t: 9, hue };
+    instruments[name] = inst;
+    return inst;
+  }
+
+  function cymbal(name, { r, pos, tilt, pad }) {
+    const g = new T.Group();
+    g.position.copy(pos);
+    const m = new T.Mesh(new T.CylinderGeometry(0.04, r, 0.05, 48, 1),
+      new T.MeshStandardMaterial({ color: 0xe0b85c, emissive: 0x2a1d06, metalness: 0.55, roughness: 0.32 }));
+    g.add(m);
+    g.rotation.x = tilt;
+    g.userData.pad = pad;
+    scene.add(g);
+    pickables.push(g);
+    stand(pos.x, pos.z, pos.y);
+    const inst = { kind: 'cymbal', g, tilt, amp: 0, t: 9 };
+    instruments[name] = inst;
+    return inst;
+  }
+
+  drum('kick',  { r: 0.85, h: 0.75, pos: new T.Vector3(0, 0.0, -0.4), hue: 15, facing: true, pad: 'kick' });
+  drum('snare', { r: 0.52, h: 0.28, pos: new T.Vector3(-1.15, 0.35, 0.75), tilt: 0.18, hue: 40, pad: 'snare' });
+  drum('tomH',  { r: 0.42, h: 0.34, pos: new T.Vector3(-0.35, 1.1, 0.1), tilt: 0.42, hue: 210, pad: 'tomH' });
+  drum('tomL',  { r: 0.58, h: 0.5, pos: new T.Vector3(1.35, 0.15, 0.65), tilt: 0.12, hue: 190, pad: 'tomL' });
+  cymbal('hat',   { r: 0.55, pos: new T.Vector3(-2.15, 0.85, 0.35), tilt: 0.12, pad: 'chh' });
+  cymbal('crash', { r: 0.8, pos: new T.Vector3(1.55, 1.75, -0.7), tilt: 0.35, pad: 'crash' });
+
+  // Sticks: a pivot near the player, pointing at the head centre; rotating it lifts the tip.
+  scene.updateMatrixWorld(true);
+  const stickGeo = new T.CylinderGeometry(0.018, 0.028, 1, 10);
+  stickGeo.rotateX(Math.PI / 2);
+  stickGeo.translate(0, 0, 0.5);
+  const stickMat = new T.MeshStandardMaterial({ color: 0xd9b98a, roughness: 0.6 });
+  function addStick(inst, offset) {
+    const target = new T.Vector3();
+    if (inst.kind === 'drum') inst.g.localToWorld(target.set(0, inst.h / 2, 0));
+    else inst.g.localToWorld(target.set(inst === instruments.hat ? 0.3 : -0.35, 0.03, 0.2));
+    const pivot = new T.Group();
+    pivot.position.copy(target).add(offset);
+    pivot.lookAt(target);
+    const len = pivot.position.distanceTo(target);
+    const stick = new T.Mesh(stickGeo, stickMat);
+    stick.scale.z = len;
+    pivot.add(stick);
+    scene.add(pivot);
+    inst.stick = { pivot, baseQ: pivot.quaternion.clone(), t: 9 };
+  }
+  addStick(instruments.snare, new T.Vector3(0.45, 0.95, 0.9));
+  addStick(instruments.tomH,  new T.Vector3(0.35, 0.9, 0.95));
+  addStick(instruments.tomL,  new T.Vector3(-0.45, 1.0, 0.9));
+  addStick(instruments.hat,   new T.Vector3(0.6, 0.9, 0.8));
+  addStick(instruments.crash, new T.Vector3(-0.6, 0.7, 1.1));
+
+  const PAD_TO_INST = { kick: 'kick', snare: 'snare', clap: 'snare', tomH: 'tomH', tomL: 'tomL', chh: 'hat', ohh: 'hat', crash: 'crash' };
+  let shake = 0;
+  const flashColor = new T.Color();
+
+  onHit((pad, vel) => {
+    const inst = instruments[PAD_TO_INST[pad.id]];
+    const v = vel / 127;
+    inst.amp = (inst.kind === 'drum' ? 0.07 : 0.16) * (0.4 + v);
+    inst.t = 0;
+    if (inst.stick) inst.stick.t = 0;
+    flash.color.copy(flashColor.setHSL(pad.hue / 360, 0.9, 0.55));
+    flash.intensity = (calm ? 1 : 2.4) * v;
+    if (pad.id === 'kick' && !calm) shake = 0.06 * v;
+  });
+
+  // Click a drum to play it
+  const ray = new T.Raycaster();
+  const ndc = new T.Vector2();
+  renderer.domElement.addEventListener('pointerdown', e => {
+    const rect = renderer.domElement.getBoundingClientRect();
+    ndc.set((e.clientX - rect.left) / rect.width * 2 - 1, -((e.clientY - rect.top) / rect.height) * 2 + 1);
+    ray.setFromCamera(ndc, cam);
+    const hitObj = ray.intersectObjects(pickables, true)[0];
+    if (!hitObj) return;
+    let o = hitObj.object;
+    while (o && !o.userData.pad) o = o.parent;
+    if (o) hit(o.userData.pad, 100 + Math.random() * 27, 'click');
+  });
+
+  let size = [0, 0];
+  register(el, {
+    draw(now, dt) {
+      const w = el.clientWidth, h = el.clientHeight;
+      if (w !== size[0] || h !== size[1]) {
+        size = [w, h];
+        renderer.setSize(w, h, false);
+        renderer.domElement.style.width = '100%';
+        renderer.domElement.style.height = '100%';
+        cam.aspect = w / h;
+        cam.updateProjectionMatrix();
+      }
+      const t = now / 1000;
+      // Slow orbit + kick shake
+      cam.position.set(camBase.x + Math.sin(t * 0.15) * 0.8, camBase.y + (Math.random() - 0.5) * shake, camBase.z);
+      cam.lookAt(look);
+      shake *= Math.exp(-dt * 14);
+      flash.intensity *= Math.exp(-dt * 6);
+
+      for (const inst of Object.values(instruments)) {
+        inst.t += dt;
+        if (inst.kind === 'drum') {
+          const pos = inst.head.geometry.attributes.position;
+          const arr = pos.array, base = inst.base, r = inst.r;
+          const env = inst.amp * Math.exp(-inst.t * 7);
+          if (env > 0.0005 || inst.dirty) {
+            for (let i = 0; i < arr.length; i += 3) {
+              const x = base[i], y = base[i + 1];
+              const rr = Math.sqrt(x * x + y * y) / r;
+              arr[i + 2] = -env * Math.sin(rr * 13 - inst.t * 38) * (1 - rr * rr);
+            }
+            pos.needsUpdate = true;
+            inst.head.geometry.computeVertexNormals();
+            inst.dirty = env > 0.0005;
+          }
+        } else {
+          const env = inst.amp * Math.exp(-inst.t * 2.6);
+          inst.g.rotation.x = inst.tilt + env * Math.sin(inst.t * 17);
+          inst.g.rotation.z = env * 0.6 * Math.cos(inst.t * 13);
+        }
+        if (inst.stick) {
+          const s = inst.stick;
+          s.t += dt;
+          const lift = -0.5 * Math.pow(Math.min(1, s.t / 0.22), 0.55);
+          s.pivot.quaternion.copy(s.baseQ);
+          s.pivot.rotateX(lift);
+        }
+      }
+      renderer.render(scene, cam);
+    },
+  });
+})();
+
+// ---------------------------------------------------------------------------
+// 01b  Top-down kit map (SVG)
+// ---------------------------------------------------------------------------
+(function kitMap() {
+  const el = document.getElementById('dmap');
+  const NS = 'http://www.w3.org/2000/svg';
+  const svg = document.createElementNS(NS, 'svg');
+  svg.setAttribute('viewBox', '0 0 400 300');
+  el.appendChild(svg);
+  const parts = [
+    { pads: ['crash'],       shape: 'circle', x: 95,  y: 62,  r: 50, label: 'Crash', key: ';' },
+    { pads: ['chh', 'ohh'],  shape: 'circle', x: 52,  y: 168, r: 38, label: 'Hats',  key: 'D F' },
+    { pads: ['snare'],       shape: 'circle', x: 140, y: 214, r: 40, label: 'Snare', key: 'S' },
+    { pads: ['tomH'],        shape: 'circle', x: 175, y: 112, r: 33, label: 'Hi tom', key: 'K' },
+    { pads: ['tomL'],        shape: 'circle', x: 318, y: 200, r: 50, label: 'Floor tom', key: 'J' },
+    { pads: ['kick'],        shape: 'rect',   x: 196, y: 150, w: 80, h: 120, label: 'Kick', key: 'A' },
+    { pads: ['clap'],        shape: 'circle', x: 330, y: 78,  r: 30, label: 'Clap', key: 'L' },
+  ];
+  const byPad = {};
+  for (const p of parts) {
+    const hue = PAD[p.pads[0]].hue;
+    const g = document.createElementNS(NS, 'g');
+    g.style.cursor = 'pointer';
+    let shape;
+    if (p.shape === 'circle') {
+      shape = document.createElementNS(NS, 'circle');
+      shape.setAttribute('cx', p.x); shape.setAttribute('cy', p.y); shape.setAttribute('r', p.r);
+      p.cx = p.x; p.cy = p.y;
+    } else {
+      shape = document.createElementNS(NS, 'rect');
+      shape.setAttribute('x', p.x); shape.setAttribute('y', p.y);
+      shape.setAttribute('width', p.w); shape.setAttribute('height', p.h); shape.setAttribute('rx', 14);
+      p.cx = p.x + p.w / 2; p.cy = p.y + p.h / 2;
+    }
+    p.base = hsl(hue, 30, 15);
+    shape.setAttribute('fill', p.base);
+    shape.setAttribute('stroke', hsl(hue, 70, 55, 0.7));
+    shape.setAttribute('stroke-width', 2);
+    g.appendChild(shape);
+    const t1 = document.createElementNS(NS, 'text');
+    t1.setAttribute('x', p.cx); t1.setAttribute('y', p.cy - 2);
+    t1.setAttribute('text-anchor', 'middle');
+    t1.setAttribute('fill', '#d6d8dd'); t1.setAttribute('font-size', '12');
+    t1.textContent = p.label;
+    const t2 = document.createElementNS(NS, 'text');
+    t2.setAttribute('x', p.cx); t2.setAttribute('y', p.cy + 14);
+    t2.setAttribute('text-anchor', 'middle');
+    t2.setAttribute('fill', hsl(hue, 80, 65)); t2.setAttribute('font-size', '11');
+    t2.setAttribute('font-family', 'JetBrains Mono, monospace');
+    t2.textContent = p.key;
+    g.append(t1, t2);
+    g.addEventListener('pointerdown', e => { e.stopPropagation(); hit(p.pads[0], 105, 'click'); });
+    svg.appendChild(g);
+    p.shapeEl = shape;
+    p.g = g;
+    for (const id of p.pads) byPad[id] = p;
+  }
+  // Drummer's seat for orientation
+  const seat = document.createElementNS(NS, 'ellipse');
+  seat.setAttribute('cx', 236); seat.setAttribute('cy', 292); seat.setAttribute('rx', 46); seat.setAttribute('ry', 14);
+  seat.setAttribute('fill', '#1b1d22');
+  svg.prepend(seat);
+
+  onHit((pad, vel) => {
+    const p = byPad[pad.id];
+    p.shapeEl.animate([{ fill: hsl(pad.hue, 85, 55) }, { fill: p.base }], { duration: 380, easing: 'ease-out' });
+    const ring = p.shapeEl.cloneNode();
+    ring.setAttribute('fill', 'none');
+    ring.setAttribute('stroke', hsl(pad.hue, 90, 65));
+    ring.setAttribute('stroke-width', 3);
+    ring.style.transformBox = 'fill-box';
+    ring.style.transformOrigin = 'center';
+    ring.style.pointerEvents = 'none';
+    svg.appendChild(ring);
+    const s = 1.25 + vel / 127 * 0.45;
+    ring.animate([{ transform: 'scale(1)', opacity: 1 }, { transform: `scale(${s})`, opacity: 0 }], { duration: 520, easing: 'ease-out' })
+      .onfinish = () => ring.remove();
+  });
+})();
+
+// ---------------------------------------------------------------------------
+// 01c  Membrane ripple (height-field wave sim)
+// ---------------------------------------------------------------------------
+(function ripple() {
+  const el = document.getElementById('dripple');
+  const canvas = el.querySelector('canvas');
+  const ctx = canvas.getContext('2d');
+  const W = 120, H = 90;
+  let cur = new Float32Array(W * H), prev = new Float32Array(W * H);
+  const off = document.createElement('canvas');
+  off.width = W; off.height = H;
+  const octx = off.getContext('2d');
+  const img = octx.createImageData(W, H);
+  let tint = hslToRgb(30, 0.85, 0.55);
+  const cell = i => [((i % 4) + 0.5) / 4, (Math.floor(i / 4) + 0.5) / 2];
+
+  function drop(px, py, v) {
+    const cx = px * W, cy = py * H, rad = 2.5 + v * 4;
+    for (let y = Math.max(1, Math.floor(cy - rad)); y < Math.min(H - 1, cy + rad); y++) {
+      for (let x = Math.max(1, Math.floor(cx - rad)); x < Math.min(W - 1, cx + rad); x++) {
+        const d = Math.hypot(x - cx, y - cy) / rad;
+        if (d < 1) cur[y * W + x] += (0.5 + v * 1.6) * (Math.cos(d * Math.PI) + 1) * 0.5 * 40;
+      }
+    }
+  }
+  onHit((pad, vel) => {
+    const [px, py] = cell(PADS.indexOf(pad));
+    drop(px + (Math.random() - 0.5) * 0.05, py + (Math.random() - 0.5) * 0.08, vel / 127);
+    tint = hslToRgb(pad.hue, 0.85, 0.55);
+  });
+  el.addEventListener('pointerdown', e => {
+    const r = el.getBoundingClientRect();
+    const col = clamp(Math.floor((e.clientX - r.left) / r.width * 4), 0, 3);
+    const row = clamp(Math.floor((e.clientY - r.top) / r.height * 2), 0, 1);
+    hit(PADS[row * 4 + col].id, 100, 'click');
+  });
+
+  register(el, {
+    draw() {
+      for (let s = 0; s < 2; s++) {
+        for (let y = 1; y < H - 1; y++) {
+          for (let x = 1; x < W - 1; x++) {
+            const i = y * W + x;
+            prev[i] = ((cur[i - 1] + cur[i + 1] + cur[i - W] + cur[i + W]) * 0.5 - prev[i]) * 0.984;
+          }
+        }
+        const t = cur; cur = prev; prev = t;
+      }
+      const d = img.data;
+      for (let i = 0; i < W * H; i++) {
+        const x = i % W;
+        const sx = (x > 0 && x < W - 1) ? cur[i + 1] - cur[i - 1] : 0;
+        const sy = (i > W && i < W * (H - 1)) ? cur[i + W] - cur[i - W] : 0;
+        const light = clamp((sx + sy) * 0.035, -1, 1);
+        const glow = clamp(Math.abs(cur[i]) * 0.02, 0, 1);
+        const j = i * 4;
+        d[j]     = 14 + light * 60 + tint[0] * 255 * glow;
+        d[j + 1] = 16 + light * 60 + tint[1] * 255 * glow;
+        d[j + 2] = 20 + light * 60 + tint[2] * 255 * glow;
+        d[j + 3] = 255;
+      }
+      octx.putImageData(img, 0, 0);
+      const [w, h, dpr] = fit(canvas);
+      ctx.imageSmoothingEnabled = true;
+      ctx.drawImage(off, 0, 0, w, h);
+      ctx.strokeStyle = 'rgba(255,255,255,0.06)';
+      ctx.lineWidth = dpr;
+      ctx.font = `${11 * dpr}px JetBrains Mono, monospace`;
+      PADS.forEach((p, i) => {
+        const [px, py] = cell(i);
+        const cw = w / 4, ch = h / 2;
+        ctx.strokeRect(px * w - cw / 2 + 6 * dpr, py * h - ch / 2 + 6 * dpr, cw - 12 * dpr, ch - 12 * dpr);
+        ctx.fillStyle = hsl(p.hue, 70, 65, 0.6);
+        ctx.fillText(p.key.toUpperCase(), px * w - cw / 2 + 12 * dpr, py * h - ch / 2 + 22 * dpr);
+      });
+    },
+  });
+})();
+
+// ---------------------------------------------------------------------------
+// 01d  Rubber pads with velocity fill
+// ---------------------------------------------------------------------------
+(function hardwarePads() {
+  const grid = document.querySelector('#dhw .hw-grid');
+  const els = {};
+  for (const p of PADS) {
+    const d = document.createElement('div');
+    d.className = 'hw';
+    d.style.setProperty('--hue', p.hue);
+    d.innerHTML = `<div class="fill"></div><div class="led"></div><div class="lbl"><span>${p.name}</span><b>${p.key.toUpperCase()}</b></div>`;
+    d.addEventListener('pointerdown', e => {
+      const r = d.getBoundingClientRect();
+      hit(p.id, 127 * (1 - (e.clientY - r.top) / r.height * 0.85), 'click');
+    });
+    grid.appendChild(d);
+    els[p.id] = d;
+  }
+  onHit((pad, vel) => {
+    const d = els[pad.id];
+    const v = vel / 127;
+    d.querySelector('.fill').animate(
+      [{ transform: `scaleY(${v})`, opacity: 1 }, { transform: `scaleY(${v})`, opacity: 0 }],
+      { duration: 450, easing: 'ease-out' });
+    d.querySelector('.led').animate(
+      [{ background: hsl(pad.hue, 100, 70), boxShadow: `0 0 10px ${hsl(pad.hue, 100, 60)}` }, { background: hsl(pad.hue, 40, 25), boxShadow: 'none' }],
+      { duration: 600 });
+    d.animate([{ transform: 'translateY(2px) scale(0.985)' }, { transform: 'none' }], { duration: 140, easing: 'ease-out' });
+  });
+})();
+
+// ---------------------------------------------------------------------------
+// 02a  Shape bursts (used in the card and in performance mode)
+// ---------------------------------------------------------------------------
+function makeBursts(canvas, transparent) {
+  const ctx = canvas.getContext('2d');
+  let parts = [];
+  const R = Math.random;
+  const add = (life, draw) => parts.push({ t: 0, life, draw });
+
+  const SPAWN = {
+    kick: (v, hue) => add(0.55, (c, k, w, h, u) => {
+      const r = (1 - Math.pow(1 - k, 3)) * Math.min(w, h) * (0.3 + v * 0.35);
+      c.fillStyle = hsl(hue, 85, 58, (1 - k) * 0.85);
+      c.beginPath(); c.arc(w / 2, h / 2, r, 0, Math.PI * 2); c.fill();
+    }),
+    snare: (v, hue) => {
+      const x = 0.2 + R() * 0.6, y = 0.2 + R() * 0.6, n = 10 + Math.round(v * 14), a0 = R() * 7;
+      add(0.38, (c, k, w, h, u) => {
+        const m = Math.min(w, h);
+        c.strokeStyle = hsl(hue, 95, 65, 1 - k);
+        c.lineWidth = 3 * u; c.lineCap = 'round';
+        for (let i = 0; i < n; i++) {
+          const a = a0 + i / n * Math.PI * 2, r0 = k * m * 0.38, r1 = r0 + m * 0.12 * (1 - k);
+          c.beginPath();
+          c.moveTo(x * w + Math.cos(a) * r0, y * h + Math.sin(a) * r0);
+          c.lineTo(x * w + Math.cos(a) * r1, y * h + Math.sin(a) * r1);
+          c.stroke();
+        }
+      });
+    },
+    chh: (v, hue) => {
+      const y = 0.15 + R() * 0.7, dir = R() < 0.5 ? 1 : -1;
+      add(0.45, (c, k, w, h, u) => {
+        c.fillStyle = hsl(hue, 90, 70, 1 - k);
+        for (let i = 0; i < 5; i++) {
+          const x = 0.5 + dir * (k * 0.5 - 0.25 + i * 0.05);
+          c.beginPath(); c.arc(x * w, y * h, (3 + v * 4) * u, 0, Math.PI * 2); c.fill();
+        }
+      });
+    },
+    ohh: (v, hue) => {
+      const x = 0.25 + R() * 0.5, y = 0.25 + R() * 0.5, rot = R() * 7;
+      add(0.7, (c, k, w, h, u) => {
+        const r = Math.min(w, h) * (0.08 + k * 0.3 * (0.6 + v));
+        c.strokeStyle = hsl(hue, 90, 65, 1 - k);
+        c.lineWidth = 4 * u;
+        c.beginPath();
+        for (let i = 0; i <= 6; i++) {
+          const a = rot + k * 2 + i / 6 * Math.PI * 2;
+          c.lineTo(x * w + Math.cos(a) * r, y * h + Math.sin(a) * r);
+        }
+        c.stroke();
+      });
+    },
+    tomL: (v, hue) => add(0.42, (c, k, w, h) => {
+      c.fillStyle = hsl(hue, 85, 55, 0.85 * (1 - k * 0.5));
+      const bw = w * (0.08 + v * 0.1);
+      c.fillRect(-bw + k * (w + bw), 0, bw, h);
+    }),
+    tomH: (v, hue) => add(0.36, (c, k, w, h) => {
+      c.fillStyle = hsl(hue, 85, 60, 0.85 * (1 - k * 0.5));
+      const bh = h * (0.08 + v * 0.1);
+      c.fillRect(0, -bh + k * (h + bh), w, bh);
+    }),
+    clap: (v, hue) => {
+      const n = 18 + Math.round(v * 22);
+      const bits = Array.from({ length: n }, () => ({
+        vx: (R() - 0.5) * 1.6, vy: -0.4 - R() * 1.1, rot: R() * 7, vr: (R() - 0.5) * 14, hue: hue + (R() - 0.5) * 80,
+      }));
+      add(1.1, (c, k, w, h, u) => {
+        const t = k * 1.1, m = Math.min(w, h);
+        for (const b of bits) {
+          const x = w / 2 + b.vx * t * m, y = h * 0.6 + (b.vy * t + 1.4 * t * t) * m;
+          c.save(); c.translate(x, y); c.rotate(b.rot + b.vr * t);
+          c.fillStyle = hsl(b.hue, 90, 65, 1 - k);
+          c.fillRect(-5 * u, -2.5 * u, 10 * u, 5 * u);
+          c.restore();
+        }
+      });
+    },
+    crash: (v, hue) => add(0.9, (c, k, w, h, u) => {
+      c.fillStyle = hsl(hue, 80, 55, (1 - k) * (calm ? 0.12 : 0.5) * v);
+      c.fillRect(0, 0, w, h);
+      c.strokeStyle = hsl(hue, 90, 70, 1 - k);
+      c.lineWidth = 2 * u;
+      for (let i = 0; i < 3; i++) {
+        c.beginPath();
+        c.arc(w / 2, h / 2, Math.max(1, (k * 0.9 - i * 0.08) * Math.max(w, h)), 0, Math.PI * 2);
+        c.stroke();
+      }
+    }),
+  };
+
+  return {
+    spawn(pad, vel) { SPAWN[pad.id](vel / 127, pad.hue); if (parts.length > 120) parts = parts.slice(-120); },
+    draw(now, dt) {
+      const [w, h] = fit(canvas);
+      const u = Math.min(w, h) / 320;
+      if (transparent) ctx.clearRect(0, 0, w, h);
+      else { ctx.fillStyle = '#0a0b0d'; ctx.fillRect(0, 0, w, h); }
+      for (const p of parts) { p.t += dt; p.draw(ctx, Math.min(1, p.t / p.life), w, h, u); }
+      parts = parts.filter(p => p.t < p.life);
+    },
+  };
+}
+
+(function burstCard() {
+  const el = document.getElementById('dburst');
+  const b = makeBursts(el.querySelector('canvas'), false);
+  onHit((pad, vel) => b.spawn(pad, vel));
+  el.addEventListener('pointerdown', e => {
+    const r = el.getBoundingClientRect();
+    hit(padAtX(e.clientX - r.left, r.width).id, 110, 'click');
+  });
+  register(el, b);
+})();
+
+// ---------------------------------------------------------------------------
+// 02b  Shader backdrop (raw WebGL)
+// ---------------------------------------------------------------------------
+function makeShader(canvas) {
+  const gl = canvas.getContext('webgl');
+  if (!gl) return null;
+  const vs = 'attribute vec2 p; void main(){ gl_Position = vec4(p, 0.0, 1.0); }';
+  const fs = `
+    precision mediump float;
+    uniform vec2 res; uniform float t; uniform float e; uniform float k; uniform vec3 col;
+    float hash(vec2 p){ return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
+    float noise(vec2 p){
+      vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * f);
+      return mix(mix(hash(i), hash(i + vec2(1.0, 0.0)), f.x), mix(hash(i + vec2(0.0, 1.0)), hash(i + vec2(1.0, 1.0)), f.x), f.y);
+    }
+    void main(){
+      vec2 uv = (gl_FragCoord.xy - 0.5 * res) / res.y;
+      uv *= 1.0 - 0.14 * k;
+      float r = length(uv), a = atan(uv.y, uv.x);
+      float n = noise(uv * 3.0 + vec2(t * 0.15, -t * 0.1));
+      float wave = sin(r * 18.0 - t * 3.0 + n * 4.0 + e * 6.0);
+      float rings = smoothstep(0.7, 1.0, wave) * e * (1.0 - smoothstep(0.15, 0.95, r));
+      float core = e * 0.35 / (r * r * 12.0 + 0.15);
+      float aur = (0.5 + 0.5 * sin(a * 5.0 + t * 0.4 + n * 3.0)) * smoothstep(0.95, 0.05, r) * (0.1 + 0.5 * e);
+      vec3 c = vec3(0.035, 0.04, 0.05) + col * (core + rings * 0.7 + aur * 0.6) + n * 0.025;
+      gl_FragColor = vec4(c, 1.0);
+    }`;
+  const sh = (type, src) => { const s = gl.createShader(type); gl.shaderSource(s, src); gl.compileShader(s); return s; };
+  const prog = gl.createProgram();
+  gl.attachShader(prog, sh(gl.VERTEX_SHADER, vs));
+  gl.attachShader(prog, sh(gl.FRAGMENT_SHADER, fs));
+  gl.linkProgram(prog);
+  if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) return null;
+  gl.useProgram(prog);
+  const buf = gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW);
+  const loc = gl.getAttribLocation(prog, 'p');
+  gl.enableVertexAttribArray(loc);
+  gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
+  const U = n => gl.getUniformLocation(prog, n);
+  const uRes = U('res'), uT = U('t'), uE = U('e'), uK = U('k'), uCol = U('col');
+  let e = 0.15, k = 0, col = hslToRgb(28, 0.85, 0.55), target = col.slice();
+  return {
+    pulse(pad, vel) {
+      e = Math.min(calm ? 0.5 : 1.3, e + vel / 127 * 0.8);
+      target = hslToRgb(pad.hue, 0.85, 0.55);
+      if (pad.id === 'kick' && !calm) k = vel / 127;
+    },
+    draw(now, dt) {
+      const [w, h] = fit(canvas);
+      gl.viewport(0, 0, w, h);
+      e = Math.max(0.12, e * Math.exp(-dt * 2.6));
+      k *= Math.exp(-dt * 9);
+      col = col.map((c, i) => c + (target[i] - c) * Math.min(1, dt * 6));
+      gl.uniform2f(uRes, w, h);
+      gl.uniform1f(uT, now / 1000);
+      gl.uniform1f(uE, e);
+      gl.uniform1f(uK, k);
+      gl.uniform3fv(uCol, col);
+      gl.drawArrays(gl.TRIANGLES, 0, 3);
+    },
+  };
+}
+
+(function shaderCard() {
+  const el = document.getElementById('dshader');
+  const s = makeShader(el.querySelector('canvas'));
+  if (!s) { el.insertAdjacentHTML('beforeend', '<div class="fallback">WebGL is not available in this browser.</div>'); return; }
+  onHit((pad, vel) => s.pulse(pad, vel));
+  el.addEventListener('pointerdown', e => {
+    const r = el.getBoundingClientRect();
+    hit(padAtX(e.clientX - r.left, r.width).id, 110, 'click');
+  });
+  register(el, s);
+})();
+
+// ---------------------------------------------------------------------------
+// 02c  Dot-matrix hit trail
+// ---------------------------------------------------------------------------
+(function dots() {
+  const el = document.getElementById('ddots');
+  const canvas = el.querySelector('canvas');
+  const ctx = canvas.getContext('2d');
+  const COLS = 56, ROWS = 17;
+  const amps = new Float32Array(COLS), hues = new Float32Array(COLS).fill(30);
+  let energy = 0, hue = 30, acc = 0;
+  onHit((pad, vel) => { energy = Math.max(energy, vel / 127); hue = pad.hue; });
+  el.addEventListener('pointerdown', e => {
+    const r = el.getBoundingClientRect();
+    hit(padAtX(e.clientX - r.left, r.width).id, 110, 'click');
+  });
+  register(el, {
+    draw(now, dt) {
+      acc += dt;
+      while (acc > 0.035) {
+        acc -= 0.035;
+        amps.copyWithin(0, 1); hues.copyWithin(0, 1);
+        amps[COLS - 1] = energy * (0.75 + Math.random() * 0.25);
+        hues[COLS - 1] = hue;
+        energy *= 0.7;
+      }
+      const [w, h] = fit(canvas);
+      ctx.fillStyle = '#0a0b0d';
+      ctx.fillRect(0, 0, w, h);
+      const cell = Math.min(w / (COLS + 2), h / (ROWS + 4));
+      const ox = (w - cell * COLS) / 2 + cell / 2, oy = (h - cell * ROWS) / 2 + cell / 2;
+      const mid = (ROWS - 1) / 2;
+      for (let c = 0; c < COLS; c++) {
+        const reach = amps[c] * (mid + 0.5);
+        for (let r = 0; r < ROWS; r++) {
+          const dist = Math.abs(r - mid);
+          const lit = dist <= reach || dist === 0;
+          ctx.fillStyle = lit
+            ? (dist === 0 && amps[c] < 0.05 ? 'rgba(255,255,255,0.35)' : hsl(hues[c], 90, 62, 0.55 + 0.45 * amps[c]))
+            : 'rgba(255,255,255,0.06)';
+          ctx.beginPath();
+          ctx.arc(ox + c * cell, oy + r * cell, cell * (lit ? 0.33 : 0.22), 0, Math.PI * 2);
+          ctx.fill();
+        }
+      }
+    },
+  });
+})();
+
+// ---------------------------------------------------------------------------
+// 02d  Kinetic type
+// ---------------------------------------------------------------------------
+function kinetic(root, flashBg) {
+  const word = root.querySelector('.kw'), sub = root.querySelector('.ks');
+  return (pad, vel) => {
+    const v = vel / 127;
+    word.textContent = pad.name.toUpperCase();
+    word.style.color = hsl(pad.hue, 90, 62);
+    word.animate([
+      { transform: `scale(${1 + v * 0.45}) skewX(${-10 * v}deg)`, letterSpacing: '0.14em', opacity: 1 },
+      { transform: 'scale(1) skewX(0deg)', letterSpacing: '0em', opacity: 0.92 },
+    ], { duration: calm ? 120 : 420, easing: 'cubic-bezier(.2,.9,.2,1)' });
+    if (sub) sub.textContent = `velocity ${vel}`;
+    if (flashBg) flashBg.animate([{ backgroundColor: hsl(pad.hue, 60, 18) }, { backgroundColor: '#0a0b0d' }], { duration: 420 });
+  };
+}
+(function typeCard() {
+  const el = document.getElementById('dtype');
+  onHit(kinetic(el.querySelector('.kin'), el));
+  el.addEventListener('pointerdown', e => {
+    const r = el.getBoundingClientRect();
+    hit(padAtX(e.clientX - r.left, r.width).id, 110, 'click');
+  });
+})();
+
+// ---------------------------------------------------------------------------
+// 02e  Performance mode overlay
+// ---------------------------------------------------------------------------
+(function perfMode() {
+  const ov = document.getElementById('perf');
+  const shader = makeShader(ov.querySelector('.pf-shader'));
+  const bursts = makeBursts(ov.querySelector('.pf-burst'), true);
+  const type = kinetic(ov.querySelector('.kin'), null);
+  const layers = [shader, bursts].filter(Boolean).map(l => register(null, l));
+  let open = false;
+  onHit((pad, vel) => {
+    if (!open) return;
+    shader && shader.pulse(pad, vel);
+    bursts.spawn(pad, vel);
+    type(pad, vel);
+  });
+  function show() {
+    ensureAudio();
+    open = true;
+    ov.hidden = false;
+    layers.forEach(l => { l.visible = true; });
+    ov.querySelector('.kw').textContent = 'PLAY';
+    ov.querySelector('.kw').style.color = '';
+    if (ov.requestFullscreen) ov.requestFullscreen().catch(() => {});
+  }
+  function hide() {
+    open = false;
+    ov.hidden = true;
+    layers.forEach(l => { l.visible = false; });
+    if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
+  }
+  document.querySelectorAll('[data-perf]').forEach(b => b.addEventListener('click', show));
+  document.getElementById('perf-close').addEventListener('click', hide);
+  document.addEventListener('fullscreenchange', () => { if (!document.fullscreenElement && open) hide(); });
+  addEventListener('keydown', e => { if (e.key === 'Escape' && open) hide(); });
+  ov.addEventListener('pointerdown', e => {
+    if (e.target.id === 'perf-close') return;
+    hit(padAtX(e.clientX, ov.clientWidth).id, 127 * (1 - e.clientY / ov.clientHeight * 0.7), 'click');
+  });
+})();
+
+// ---------------------------------------------------------------------------
+// 03a  Groove highway
+// ---------------------------------------------------------------------------
+(function highway() {
+  const el = document.getElementById('dhigh');
+  const canvas = el.querySelector('canvas');
+  const ctx = canvas.getContext('2d');
+  const LANES = ['kick', 'snare', 'chh', 'ohh'];
+  const BPM = 92, STEP = 60 / BPM / 4;
+  const PATTERN = { kick: [0, 7, 8, 10], snare: [4, 12], chh: [0, 2, 4, 6, 8, 10, 12], ohh: [14] };
+  const LOOK = 1.9, JUDGE = 0.8;
+  const t0 = performance.now() / 1000;
+  const judged = new Map();
+  const laneFlash = [0, 0, 0, 0];
+  let combo = 0, best = 0, msg = '', msgHue = 0, msgT = 9, sparks = [];
+  const songTime = ms => ms / 1000 - t0;
+
+  function notesIn(from, to) {
+    const out = [];
+    for (let s = Math.ceil(from / STEP); s * STEP <= to; s++) {
+      const st = ((s % 16) + 16) % 16;
+      LANES.forEach((ln, li) => { if (PATTERN[ln].includes(st)) out.push({ id: s * 4 + li, lane: li, time: s * STEP }); });
+    }
+    return out;
+  }
+
+  onHit((pad, vel, src, nowMs) => {
+    if (src === 'loop') return;
+    const li = LANES.indexOf(pad.id);
+    if (li < 0) return;
+    laneFlash[li] = 1;
+    const t = songTime(nowMs);
+    const cands = notesIn(t - 0.2, t + 0.2).filter(n => n.lane === li && !judged.has(n.id));
+    if (!cands.length) return;
+    cands.sort((a, b) => Math.abs(a.time - t) - Math.abs(b.time - t));
+    const n = cands[0], d = t - n.time, ad = Math.abs(d);
+    let label;
+    if (ad < 0.045) label = 'Perfect';
+    else if (ad < 0.1) label = 'Good';
+    else label = d < 0 ? 'Early' : 'Late';
+    judged.set(n.id, label);
+    if (label === 'Perfect' || label === 'Good') {
+      combo++; best = Math.max(best, combo);
+      sparks.push({ lane: li, t: 0, hue: pad.hue });
+    } else combo = 0;
+    msg = label; msgHue = label === 'Perfect' ? 140 : label === 'Good' ? 45 : 0; msgT = 0;
+  });
+
+  el.addEventListener('pointerdown', e => {
+    const r = el.getBoundingClientRect();
+    const li = clamp(Math.floor((e.clientX - r.left) / r.width * 4), 0, 3);
+    hit(LANES[li], 110, 'click');
+  });
+
+  register(el, {
+    draw(now, dt) {
+      const [w, h, dpr] = fit(canvas);
+      const t = songTime(now);
+      ctx.fillStyle = '#0a0b0d';
+      ctx.fillRect(0, 0, w, h);
+      const lw = w / 4, jy = h * JUDGE, pps = jy / LOOK;
+
+      LANES.forEach((ln, li) => {
+        const p = PAD[ln];
+        const g = ctx.createLinearGradient(0, 0, 0, h);
+        g.addColorStop(0, 'rgba(255,255,255,0)');
+        g.addColorStop(1, hsl(p.hue, 70, 50, 0.08 + laneFlash[li] * 0.3));
+        ctx.fillStyle = g;
+        ctx.fillRect(li * lw + 2 * dpr, 0, lw - 4 * dpr, h);
+        laneFlash[li] *= Math.exp(-dt * 8);
+        ctx.fillStyle = hsl(p.hue, 80, 65, 0.9);
+        ctx.font = `600 ${13 * dpr}px JetBrains Mono, monospace`;
+        ctx.textAlign = 'center';
+        ctx.fillText(`${p.key.toUpperCase()} · ${p.name}`, li * lw + lw / 2, h - 12 * dpr);
+      });
+
+      // Beat lines
+      for (let s = Math.ceil((t - (1 - JUDGE) * LOOK) / (STEP * 4)); s * STEP * 4 < t + LOOK; s++) {
+        const y = jy - (s * STEP * 4 - t) * pps;
+        ctx.fillStyle = s % 4 === 0 ? 'rgba(255,255,255,0.14)' : 'rgba(255,255,255,0.05)';
+        ctx.fillRect(0, y, w, dpr);
+      }
+
+      ctx.fillStyle = 'rgba(255,255,255,0.75)';
+      ctx.fillRect(0, jy - dpr, w, 2 * dpr);
+
+      for (const n of notesIn(t - 0.6, t + LOOK)) {
+        const state = judged.get(n.id);
+        if (!state && n.time < t - 0.2) { judged.set(n.id, 'miss'); combo = 0; }
+        if (state === 'Perfect' || state === 'Good') continue;
+        const y = jy - (n.time - t) * pps;
+        const p = PAD[LANES[n.lane]];
+        const missed = judged.get(n.id) && judged.get(n.id) !== 'Perfect' && judged.get(n.id) !== 'Good';
+        ctx.fillStyle = missed ? 'rgba(255,255,255,0.12)' : hsl(p.hue, 85, 58);
+        const nw = lw * 0.7, nh = 14 * dpr;
+        ctx.beginPath();
+        ctx.roundRect ? ctx.roundRect(n.lane * lw + (lw - nw) / 2, y - nh / 2, nw, nh, nh / 2) : ctx.rect(n.lane * lw + (lw - nw) / 2, y - nh / 2, nw, nh);
+        ctx.fill();
+      }
+
+      sparks = sparks.filter(s => (s.t += dt) < 0.35);
+      for (const s of sparks) {
+        const k = s.t / 0.35;
+        ctx.strokeStyle = hsl(s.hue, 95, 70, 1 - k);
+        ctx.lineWidth = 3 * dpr;
+        ctx.beginPath();
+        ctx.ellipse(s.lane * lw + lw / 2, jy, lw * (0.3 + k * 0.4), 10 * dpr * (1 + k * 2), 0, 0, Math.PI * 2);
+        ctx.stroke();
+      }
+
+      msgT += dt;
+      ctx.textAlign = 'center';
+      if (msg && msgT < 0.7) {
+        ctx.fillStyle = hsl(msgHue, 85, 62, 1 - msgT / 0.7);
+        ctx.font = `700 ${(30 + (1 - Math.min(1, msgT * 6)) * 10) * dpr}px Space Grotesk, sans-serif`;
+        ctx.fillText(msg, w / 2, h * 0.3);
+      }
+      ctx.textAlign = 'right';
+      ctx.fillStyle = '#ecedf0';
+      ctx.font = `700 ${22 * dpr}px Space Grotesk, sans-serif`;
+      ctx.fillText(`${combo}×`, w - 14 * dpr, 30 * dpr);
+      ctx.fillStyle = '#8b8f99';
+      ctx.font = `${11 * dpr}px JetBrains Mono, monospace`;
+      ctx.fillText(`combo · best ${best} · ${BPM} BPM`, w - 14 * dpr, 46 * dpr);
+
+      if (judged.size > 400) for (const id of judged.keys()) { if (id / 4 * STEP < t - 3) judged.delete(id); }
+    },
+  });
+})();
+
+// ---------------------------------------------------------------------------
+// 03b  Loop wheel
+// ---------------------------------------------------------------------------
+(function loopWheel() {
+  const el = document.getElementById('dwheel');
+  const canvas = el.querySelector('canvas');
+  const ctx = canvas.getContext('2d');
+  const recBtn = document.getElementById('wheel-rec');
+  const BPM = 100, STEPS = 16, BAR = 60 / BPM * 4;
+  const cells = new Map();
+  const skip = new Set();
+  const pulses = new Map();
+  let on = false, start = 0, lastStep = -1;
+
+  const position = now => (((now - start) / 1000) % BAR) / BAR * STEPS;
+
+  recBtn.addEventListener('click', e => {
+    e.stopPropagation();
+    on = !on;
+    if (on) { ensureAudio(); start = performance.now(); lastStep = -1; }
+    recBtn.textContent = on ? '■ Stop' : '● Record loop';
+    recBtn.classList.toggle('on', on);
+  });
+  document.getElementById('wheel-clear').addEventListener('click', e => { e.stopPropagation(); cells.clear(); skip.clear(); });
+
+  onHit((pad, vel, src, now) => {
+    if (!on || src === 'loop') return;
+    const pos = position(now);
+    const step = Math.round(pos) % STEPS;
+    const key = step * 8 + PADS.indexOf(pad);
+    cells.set(key, vel);
+    // Rounded up to a step that hasn't played yet: don't replay it a few ms after the live hit.
+    if (step !== Math.floor(pos) % STEPS) skip.add(key);
+  });
+
+  el.addEventListener('pointerdown', e => {
+    if (e.target.closest('button')) return;
+    const r = el.getBoundingClientRect();
+    hit(padAtX(e.clientX - r.left, r.width).id, 105, 'click');
+  });
+
+  register(el, {
+    draw(now) {
+      const [w, h, dpr] = fit(canvas);
+      ctx.fillStyle = '#0a0b0d';
+      ctx.fillRect(0, 0, w, h);
+      const cx = w / 2, cy = h / 2 + 8 * dpr, R = Math.min(w, h) * 0.42;
+      const pos = on ? position(now) : 0;
+
+      if (on) {
+        const cur = Math.floor(pos) % STEPS;
+        if (cur !== lastStep) {
+          lastStep = cur;
+          PADS.forEach((p, pi) => {
+            const key = cur * 8 + pi;
+            if (!cells.has(key)) return;
+            if (skip.has(key)) { skip.delete(key); return; }
+            pulses.set(key, now);
+            hit(p.id, cells.get(key), 'loop');
+          });
+        }
+      }
+
+      const ringR = pi => R * (0.32 + pi / 7 * 0.66);
+      ctx.lineWidth = dpr;
+      PADS.forEach((p, pi) => {
+        ctx.strokeStyle = hsl(p.hue, 50, 40, 0.25);
+        ctx.beginPath(); ctx.arc(cx, cy, ringR(pi), 0, Math.PI * 2); ctx.stroke();
+      });
+      for (let s = 0; s < STEPS; s++) {
+        const a = s / STEPS * Math.PI * 2 - Math.PI / 2;
+        ctx.strokeStyle = s % 4 === 0 ? 'rgba(255,255,255,0.16)' : 'rgba(255,255,255,0.05)';
+        ctx.beginPath();
+        ctx.moveTo(cx + Math.cos(a) * R * 0.28, cy + Math.sin(a) * R * 0.28);
+        ctx.lineTo(cx + Math.cos(a) * R * 1.02, cy + Math.sin(a) * R * 1.02);
+        ctx.stroke();
+      }
+      for (const [key, vel] of cells) {
+        const step = Math.floor(key / 8), pi = key % 8, p = PADS[pi];
+        const a = step / STEPS * Math.PI * 2 - Math.PI / 2;
+        const since = (now - (pulses.get(key) || -1e9)) / 1000;
+        const boost = Math.max(0, 1 - since * 4);
+        ctx.fillStyle = hsl(p.hue, 90, 55 + boost * 15);
+        ctx.beginPath();
+        ctx.arc(cx + Math.cos(a) * ringR(pi), cy + Math.sin(a) * ringR(pi), (3 + vel / 127 * 4 + boost * 5) * dpr, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      if (on) {
+        const a = pos / STEPS * Math.PI * 2 - Math.PI / 2;
+        ctx.strokeStyle = '#ff8a3d';
+        ctx.lineWidth = 2.5 * dpr;
+        ctx.beginPath();
+        ctx.moveTo(cx, cy);
+        ctx.lineTo(cx + Math.cos(a) * R * 1.05, cy + Math.sin(a) * R * 1.05);
+        ctx.stroke();
+      }
+      ctx.fillStyle = on ? '#ff8a3d' : '#3a3d44';
+      ctx.beginPath(); ctx.arc(cx, cy, R * 0.2, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = on ? '#1a0d03' : '#8b8f99';
+      ctx.font = `600 ${12 * dpr}px JetBrains Mono, monospace`;
+      ctx.textAlign = 'center';
+      ctx.fillText(on ? `${Math.floor(pos / 4) + 1}.${Math.floor(pos) % 4 + 1}` : `${BPM} BPM`, cx, cy + 4 * dpr);
+    },
+  });
+})();
+
+// ---------------------------------------------------------------------------
+// 03c  Session stats
+// ---------------------------------------------------------------------------
+(function stats() {
+  const bars = document.getElementById('st-bars');
+  const counts = Object.fromEntries(PADS.map(p => [p.id, 0]));
+  const rows = {};
+  for (const p of PADS) {
+    const r = document.createElement('div');
+    r.className = 'bar';
+    r.innerHTML = `<span>${p.name}</span><div class="track"><div class="tf" style="background:${hsl(p.hue, 85, 55)}"></div></div><span>0</span>`;
+    bars.appendChild(r);
+    rows[p.id] = r;
+  }
+  const times = [];
+  let total = 0, velSum = 0;
+  onHit((pad, vel, src, now) => {
+    if (src === 'loop') return;
+    counts[pad.id]++; total++; velSum += vel;
+    times.push(now);
+    if (times.length > 9) times.shift();
+    const max = Math.max(...Object.values(counts));
+    for (const p of PADS) {
+      rows[p.id].querySelector('.tf').style.width = `${counts[p.id] / max * 100}%`;
+      rows[p.id].lastElementChild.textContent = counts[p.id];
+    }
+    document.getElementById('st-hits').textContent = total;
+    document.getElementById('st-vel').textContent = Math.round(velSum / total);
+    const iois = [];
+    for (let i = 1; i < times.length; i++) {
+      const d = (times[i] - times[i - 1]) / 1000;
+      if (d > 0.1 && d < 1.6) iois.push(d);
+    }
+    if (iois.length >= 3) {
+      iois.sort((a, b) => a - b);
+      let bpm = 60 / iois[Math.floor(iois.length / 2)];
+      while (bpm < 70) bpm *= 2;
+      while (bpm > 180) bpm /= 2;
+      document.getElementById('st-bpm').textContent = Math.round(bpm);
+    }
+  });
+})();
+
+// ---------------------------------------------------------------------------
+// 04  Mobbin board (links + a tiny CSS sketch of each pattern)
+// ---------------------------------------------------------------------------
+(function mobbin() {
+  const items = [
+    { app: 'Perplexity', kind: 'iOS · voice mode', url: 'https://mobbin.com/screens/198935b7-3834-4a4e-8c47-e75830b3d64e',
+      what: 'A near-black screen with a single dot-matrix waveform across the middle. Very calm until there is sound.',
+      steal: 'The LED dot trail (demo 02c) in place of the text monitor during play.',
+      mini: 'radial-gradient(circle, #fff 1.4px, transparent 1.6px) 0 0/10px 10px, #111' },
+    { app: 'Apple Music', kind: 'iOS · lyrics', url: 'https://mobbin.com/screens/7879ac4d-8a50-4960-b5a6-506157d7d67b',
+      what: 'Full-screen huge type over a blurred, tinted background. The active line is bright and the rest fade out.',
+      steal: 'Kinetic pad names and colour-tinted backdrops in performance mode.',
+      mini: 'linear-gradient(135deg, #3d5a3a, #6b5c3a 60%, #2a2f2a)' },
+    { app: 'Memrise', kind: 'iOS · listening drill', url: 'https://mobbin.com/screens/22ea28df-1e0c-460d-b174-705d1d3194eb',
+      what: '"Press when you hear…" with a timing track and flags showing where you pressed against the target, then a "Close enough" verdict.',
+      steal: 'A post-run timing strip for the groove highway: target vs. your hit, per note.',
+      mini: 'linear-gradient(transparent 46%, #e8b93a 46%, #e8b93a 54%, transparent 54%), #24302a' },
+    { app: 'Opal', kind: 'iOS · sound player', url: 'https://mobbin.com/screens/582af872-497e-42e6-ba87-9074cac81117',
+      what: 'One glowing macro image fills the screen with a single round pause button. Immersive, almost no chrome.',
+      steal: 'Performance mode chrome: one exit button, everything else is the visual.',
+      mini: 'radial-gradient(circle at 60% 55%, #ff7a3d, #c0367a 25%, #3b3fa0 60%)' },
+    { app: 'Opal', kind: 'iOS · create mix', url: 'https://mobbin.com/screens/fe9e0bea-1818-4d5d-995f-0049ba822c7e',
+      what: 'Each sound is a card with glitchy, saturated generative art and a play button.',
+      steal: 'Cover art for sample kits (Phase 3 "kits saved in the browser"): a kit picker that looks like an album shelf.',
+      mini: 'linear-gradient(120deg, #f6c445, #e6497a 35%, #3f6be0 65%, #19c2a8)' },
+    { app: 'Demo (chords app)', kind: 'iOS · song builder', url: 'https://mobbin.com/screens/24511a9c-b87a-4c79-b6df-ac7ccb995f48',
+      what: 'Big round chord buttons, tempo and rhythm chips (112 | 4:4, "Pop Ballad"), and a coach-mark bubble explaining one control at a time.',
+      steal: 'Kit and tempo chips above the pads, plus one-at-a-time onboarding tips ("Drop a sample on a pad").',
+      mini: 'radial-gradient(circle at 25% 50%, #4a4a4a 14px, transparent 15px), radial-gradient(circle at 50% 50%, #4a4a4a 14px, transparent 15px), radial-gradient(circle at 75% 50%, #d9634a 14px, transparent 15px), #2b2b2b' },
+    { app: 'Duolingo', kind: 'iOS · music course', url: 'https://mobbin.com/screens/90391d52-4bb2-4ad8-8552-1f1d472703f4',
+      what: 'A winding path of lesson nodes with streaks and stars. Each node is a short song exercise.',
+      steal: 'A groove path: unlock grooves on the highway one at a time, with stars for timing accuracy.',
+      mini: 'radial-gradient(circle at 30% 30%, #e94f9b 10px, transparent 11px), radial-gradient(circle at 60% 55%, #e94f9b 10px, transparent 11px), radial-gradient(circle at 40% 80%, #e94f9b 10px, transparent 11px), #fbeef5' },
+    { app: 'Suno', kind: 'Web · create studio', url: 'https://mobbin.com/screens/e6e8626b-b9cc-42b8-97d8-56176095dc8c',
+      what: 'Dark studio layout: waveform with a draggable selection, start/end time fields, and a "Drop here to replace" zone.',
+      steal: 'Trim handles on dropped pad samples (the app already supports drag-and-drop per pad).',
+      mini: 'repeating-linear-gradient(90deg, #888 0 2px, transparent 2px 5px) center/100% 40% no-repeat, #1b1b1b' },
+    { app: 'ElevenLabs', kind: 'Web · music timeline', url: 'https://mobbin.com/screens/f30e8b3c-22fa-4c7c-b183-1b3e63aa0a58',
+      what: 'A sectioned waveform timeline at the bottom, labelled by part (Intro, Verse A…), with a play button and zoom.',
+      steal: 'A session recorder: record a whole jam, then see it as a timeline you can scrub, export as MIDI and share.',
+      mini: 'repeating-linear-gradient(90deg, #f0c34a 0 2px, transparent 2px 4px) 0 60%/100% 30% no-repeat, #fafafa' },
+  ];
+  const grid = document.getElementById('mob-grid');
+  for (const it of items) {
+    const a = document.createElement('article');
+    a.className = 'mob';
+    a.innerHTML = `
+      <div class="mini" style="background:${it.mini}"></div>
+      <div class="app"><b><a href="${it.url}" target="_blank" rel="noopener">${it.app}</a></b><span>${it.kind}</span></div>
+      <p>${it.what}</p>
+      <div class="steal">${it.steal}</div>`;
+    grid.appendChild(a);
+  }
+})();
+
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>
