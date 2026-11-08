@@ -152,6 +152,37 @@ The goal is that every hit feels **satisfying**: instant, consistent and multi-s
 | Capacitive touch strip | Pitch/FX slider on Studio | No moving parts. The classic ESP32 has built-in touch pins. |
 | Haptic actuator (LRA + DRV2605L driver) | Feedback on "Perfect" hits, silent practice | A short thump or buzz adds a lot of satisfaction in a game. |
 
+### Under-$50 starter kit (cheapest found, Nov 2026)
+
+This kit covers one 6-pad rig (Kit 6 or Arc 6) plus the Feel lab tests, on a DevKitC V4 we already own.
+- **"est."** marks a typical marketplace price that wasn't verified. Check each listing before ordering.
+- **Shipping and tax are extra.** Group orders to save on shipping.
+
+| Item | Qty | Where | Approx. price |
+|---|---|---|---|
+| Piezo discs 35 mm, prewired | 1 pack of 20 | [AliExpress search](https://www.aliexpress.com/w/wholesale-35mm-piezo-disc-wired.html) | ≈ $5–12 (est.) |
+| 1 MΩ resistors | 20-pack | [SparkFun](https://www.sparkfun.com/resistor-1m-ohm-1-4-watt-pth-20-pack-thick-leads.html) | $0.95 |
+| 3.3 V Zener 1N4728A | 10 | [DigiKey Canada](https://www.digikey.ca/en/products/detail/onsemi/1N4728A/977183) | ≈ $1–3 |
+| WS2812B strip, 1 m, 60 LEDs (cut into 6 rings) | 1 | [Abra Electronics](https://abra-electronics.com/opto-illumination/led-strips/5v-addressable/led-strip-13-1m-rgb-60-5050-leds-1-meter-strip-ws2812-individually-addressable-3-pin-dupont-connector.html) | US$12.51 |
+| Silicone trivets ≈ 13 cm (pad tops) | 2 sets | [Walmart search](https://www.walmart.com/search?q=round+silicone+trivet) | ≈ $4.39 each |
+| EVA foam sheets 2 mm | 3 | [Hobby Lobby](https://www.hobbylobby.com/crafts-hobbies/basic-crafts/craft-foam/white---foam-sheet---12-x-18---2mm/p/28625) or any craft store | ≈ $0.99 each |
+| Velostat sheet | 1 | [Adafruit #1361](https://www.adafruit.com/product/1361) | $4.95 |
+| Vibrating mini motor disc | 1 | [The Pi Hut](https://thepihut.com/search?q=vibrating+mini+motor+disc) | £1.70 |
+| Jumper wires (if needed) | 1 pack | [Amazon.ca search](https://www.amazon.ca/s?k=dupont+jumper+wires) | ≈ $3–5 (est.) |
+| Base: cardboard or scrap plywood | — | recycling | $0 |
+| **Total** | | | **≈ $40–48** |
+
+- **Tightest budget (≈ $30):** skip the Velostat and the motor until the Feel lab needs them.
+- **Later, not in this kit:**
+  - XIAO ESP32S3 (≈ $7)
+  - CD74HC4067 multiplexer (≈ $2)
+  - [Adafruit DRV2605L](https://www.adafruit.com/product/2305) ($7.95)
+  - arcade buttons ([Walmart 6-pack](https://www.walmart.com/ip/Milue-6PCS-Colors-30mm-Arcade-Game-Push-Button-Transparent-Crystal-Button/7068819641))
+  - EC11 encoders ([eBay](https://www.ebay.com/shop/ec11), ≈ $12 for 10)
+  - single LED rings ([Universal-Solder](https://www.universal-solder.ca/product/12-led-ring-ws2812b-rgb-addressable-50mm/), CA$2.65–2.99)
+
+Buy links for every part are also in Figma, on the part cards in the "Buttons, pads & satisfaction" section.
+
 ### Principles for satisfaction
 
 1. **Instant response:** sound in under 10 ms, an LED flash on the same hit, optional haptic.
