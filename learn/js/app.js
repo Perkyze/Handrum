@@ -1,0 +1,714 @@
+/* Backbeat — screens and game flow. Three tabs: Learn (the trail), Jam (free play) and Settings (DAW, binds, pad). */
+(function () {
+  'use strict';
+  const { h, clamp, reduced } = window.Dom;
+  const K = window.Kit, A = window.Sound, S = window.Store, L = window.Lessons, R = window.Render, PL = window.Play, TR = window.Trail;
+  const app = document.getElementById('app');
+  const CHAPTERS = L.CHAPTERS;
+
+  // ---------- settings → kit and sound ----------
+  function applySettings() {
+    const s = S.load().settings;
+    K.use(s);
+    A.setVolume(s.volume);
+    A.setClick(s.click);
+  }
+  applySettings();
+
+  // ---------- screen plumbing ----------
+  let disposers = [], onKey = null;
+  const later = (fn, ms) => { const id = setTimeout(fn, ms); disposers.push(() => clearTimeout(id)); return id; };
+  function show(node, tab) {
+    disposers.forEach((f) => f());
+    disposers = []; onKey = null;
+    K.cancelLearn();
+    A.stop();
+    document.querySelectorAll('.confetti, .toast, .tabbar').forEach((n) => n.remove());
+    app.textContent = '';
+    node.classList.add('screen');
+    if (tab) { node.classList.add('tabbed'); document.body.appendChild(tabbar(tab)); }
+    app.appendChild(node);
+    window.scrollTo(0, 0);
+  }
+  document.addEventListener('keydown', (e) => {
+    if (e.metaKey || e.ctrlKey || e.altKey) return;
+    if (e.target && e.target.closest && e.target.closest('input, select, textarea')) return;
+    if (onKey) onKey(e);
+  });
+  const onButton = (e) => {
+    const ae = document.activeElement;
+    return (e.key === ' ' || e.key === 'Enter') && ae && ae.tagName === 'BUTTON' && !ae.disabled;
+  };
+  function toast(text) {
+    document.querySelectorAll('.toast').forEach((n) => n.remove());
+    const t = h('div', { class: 'toast', role: 'status' }, text);
+    document.body.appendChild(t);
+    setTimeout(() => t.remove(), 2600);
+  }
+  function confetti() {
+    if (reduced) return;
+    const box = h('div', { class: 'confetti', 'aria-hidden': 'true' });
+    const colors = K.DRUMS.map((d) => d.color);
+    for (let i = 0; i < 70; i++) {
+      box.appendChild(h('i', { style: {
+        left: Math.random() * 100 + '%', background: colors[i % colors.length],
+        animationDelay: Math.random() * 0.5 + 's', animationDuration: 1.6 + Math.random() * 1.4 + 's',
+        transform: `rotate(${Math.random() * 360}deg)`, width: 6 + Math.random() * 6 + 'px', height: 8 + Math.random() * 10 + 'px',
+      } }));
+    }
+    document.body.appendChild(box);
+    setTimeout(() => box.remove(), 3400);
+  }
+
+  // Every hit, from anywhere, makes a sound and lights its pad wherever a kit is on screen.
+  K.on((id, vel) => {
+    A.unlock();
+    A.hit(id, vel);
+    document.querySelectorAll('.pad[data-id="' + id + '"]').forEach((p) => { p.classList.remove('hit'); void p.getBBox(); p.classList.add('hit'); });
+    document.querySelectorAll('[data-drum="' + id + '"]').forEach((p) => { p.classList.remove('flash'); void p.offsetWidth; p.classList.add('flash'); });
+  });
+  document.addEventListener('pointerdown', () => A.unlock(), { once: true });
+
+  // ---------- small pieces ----------
+  const logo = () => h('span', { class: 'logo', 'aria-hidden': 'true', html:
+    '<svg viewBox="0 0 64 64"><rect width="64" height="64" rx="16" fill="#ffd23f"/><ellipse cx="32" cy="40" rx="18" ry="6" fill="#15122b"/><rect x="14" y="26" width="36" height="14" fill="#15122b"/><ellipse cx="32" cy="26" rx="18" ry="6" fill="#fdf8ec" stroke="#15122b" stroke-width="3"/><path d="M20 10 L30 22 M44 10 L34 22" stroke="#15122b" stroke-width="4" stroke-linecap="round"/></svg>' });
+  const speaker = () => h('span', { class: 'ico', 'aria-hidden': 'true', html:
+    '<svg viewBox="0 0 24 24"><path d="M4 9v6h4l5 4V5L8 9H4z" fill="currentColor"/><path d="M16 8.5a5 5 0 010 7M18.5 6a8.5 8.5 0 010 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>' });
+  const starRow = (n) => h('span', { class: 'stars', 'aria-label': n + ' of 3 stars' }, [0, 1, 2].map((i) => h('i', { class: i < n ? 'on' : '' }, '★')));
+  const bindHtml = (text) => text.replace(/\{(\w+)\}/g, (m, id) => K.byId(id) ? '<kbd class="bind" style="--c:' + K.byId(id).color + '">' + R.esc(K.keyFor(id)) + '</kbd>' : m);
+
+  // the on-screen kit: tap a drum to play it
+  function kitEl(on) {
+    const el = h('div', { class: 'kit', html: R.kit(on) });
+    el.addEventListener('pointerdown', (e) => {
+      const p = e.target.closest('.pad');
+      if (!p) return;
+      e.preventDefault();
+      K.emit(p.dataset.id, 100, 'tap');
+    });
+    el.target = (ids) => {
+      const set = new Set(ids || []);
+      el.querySelectorAll('.pad').forEach((p) => { p.classList.toggle('lit', set.has(p.dataset.id)); p.classList.toggle('dim', set.size > 0 && !set.has(p.dataset.id)); });
+    };
+    return el;
+  }
+
+  // ---------- navigation ----------
+  const TAB_ICONS = {
+    learn: '<svg viewBox="0 0 24 24"><path d="M5 4h11a3 3 0 0 1 3 3v13H8a3 3 0 0 1-3-3z"/><path d="M5 17a3 3 0 0 1 3-3h11"/></svg>',
+    jam: '<svg viewBox="0 0 24 24"><ellipse cx="12" cy="9" rx="8" ry="3"/><path d="M4 9v7c0 1.7 3.6 3 8 3s8-1.3 8-3V9"/><path d="M8 3l3 5M16 3l-3 5"/></svg>',
+    settings: '<svg viewBox="0 0 24 24"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2.2"/><circle cx="10" cy="17" r="2.2"/></svg>',
+  };
+  function tabbar(active) {
+    const tabs = [['learn', 'Learn', lessons], ['jam', 'Jam', jam], ['settings', 'Settings', settings]];
+    return h('nav', { class: 'tabbar', 'aria-label': 'Main' }, h('div', { class: 'tabbar-in' },
+      tabs.map(([id, label, fn]) => h('button', { class: 'tab' + (id === active ? ' on' : ''), 'aria-current': id === active ? 'page' : null, onclick: () => { if (id !== active) fn(); } },
+        h('span', { class: 'tab-ico', 'aria-hidden': 'true', html: TAB_ICONS[id] }), h('span', null, label)))));
+  }
+  function inputChip() {
+    const st = K.status, d = K.daw(S.load().settings.daw);
+    const pad = st.serial || st.midi.length;
+    const chip = h('button', { class: 'chip inchip' + (pad ? ' on' : ''), onclick: settings, title: 'Input and DAW settings' },
+      h('i', { class: 'dot' }), pad ? 'Pad' : 'Keys', h('small', null, ' · ' + (d.short || d.name)));
+    return chip;
+  }
+  function topbar() {
+    const st = S.load();
+    const lv = S.levelInfo(st.xp);
+    const streak = S.streak();
+    return h('header', { class: 'top' },
+      h('div', { class: 'brand' }, logo(), h('span', null, 'Backbeat')),
+      h('div', { class: 'chips' },
+        inputChip(),
+        h('span', { class: 'chip streak' + (streak ? ' lit' : ''), title: 'Days in a row' }, '🔥 ', String(streak)),
+        h('span', { class: 'chip lvchip', title: `Level ${lv.level}, ${lv.title}` },
+          h('b', null, 'Lv ' + lv.level), h('span', { class: 'mini' }, h('i', { style: { width: Math.round(lv.pct * 100) + '%' } })))));
+  }
+  K.onStatus(() => { document.querySelectorAll('.inchip').forEach((c) => c.replaceWith(inputChip())); });
+
+  // DAW picker used in onboarding and settings
+  function dawSelect(onchange) {
+    const cur = S.load().settings.daw;
+    const sel = h('select', { class: 'select', id: 'daw', 'aria-label': 'Your DAW' },
+      K.DAWS.map((d) => h('option', { value: d.id, selected: d.id === cur ? true : null }, d.name)));
+    sel.addEventListener('change', () => {
+      S.update((s) => {
+        if (sel.value === 'custom' && !s.settings.custom) s.settings.custom = JSON.parse(JSON.stringify(K.daw(s.settings.daw === 'custom' ? 'handpad' : s.settings.daw).binds));
+        s.settings.daw = sel.value;
+      });
+      applySettings();
+      onchange(sel.value);
+    });
+    return sel;
+  }
+  function keyPreview() {
+    return h('div', { class: 'keyprev' }, ['kick', 'snare', 'hat'].map((id) => {
+      const d = K.byId(id);
+      return h('span', { style: { '--c': d.color } }, h('kbd', null, K.keyFor(id)), d.name);
+    }));
+  }
+
+  // =====================================================================
+  // Onboarding
+  // =====================================================================
+  function onboarding() {
+    let head = 1;
+    const tiers = [[1, 'Never', 'Start from the very first drum'], [3, 'A little', 'Opens the first three chapters'], [8, 'Yes, I play', 'Opens every chapter']];
+    const btns = tiers.map(([n, t, sub]) => h('button', { class: 'tier' + (n === 1 ? ' on' : ''), 'aria-pressed': n === 1 ? 'true' : 'false', onclick: () => select(n) }, h('strong', null, t), h('span', null, sub)));
+    function select(n) { head = n; btns.forEach((b, i) => { b.classList.toggle('on', tiers[i][0] === n); b.setAttribute('aria-pressed', tiers[i][0] === n ? 'true' : 'false'); }); }
+    const tip = h('p', { class: 'daw-tip' }, K.daw(S.load().settings.daw).tip);
+    let prev = keyPreview();
+    const sel = dawSelect((id) => { tip.textContent = K.daw(id).tip; const n = keyPreview(); prev.replaceWith(n); prev = n; });
+    const go = () => {
+      A.unlock();
+      S.update((s) => { s.onboarded = true; s.head = head; });
+      S.markSeen();
+      lessons();
+    };
+    show(h('main', { class: 'onboard' },
+      h('div', { class: 'brand big' }, logo(), h('span', null, 'Backbeat')),
+      h('h1', null, 'Learn drums a few minutes at a time.'),
+      h('ul', { class: 'pitch' },
+        h('li', null, h('b', null, 'Start from zero. '), 'Meet one drum at a time, then build real beats.'),
+        h('li', null, h('b', null, 'Every lesson is a game. '), 'Hit the notes as they slide in, chase combos and stars.'),
+        h('li', null, h('b', null, 'Play your way. '), 'Your Handpad, any MIDI pad, the keyboard or a tap on screen.')),
+      h('p', { class: 'eyebrow' }, 'Have you played drums before?'),
+      h('div', { class: 'tiers' }, btns),
+      h('p', { class: 'eyebrow' }, 'Which DAW do you use with your pad?'),
+      h('div', { class: 'dawbox' }, sel, tip, prev),
+      h('button', { class: 'btn big', onclick: go }, 'Let’s play'),
+      h('p', { class: 'fine' }, 'You can change your DAW and every key in Settings. Progress is saved on this device.')));
+    onKey = (e) => { if (e.key === 'Enter' && !onButton(e)) go(); };
+  }
+
+  // =====================================================================
+  // Learn trail (same mechanics as Tonic's Learn tab)
+  // =====================================================================
+  const LOCK_SVG = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 10V7a5 5 0 0 1 10 0v3h1a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-8a2 2 0 0 1 2-2zm2 0h6V7a3 3 0 0 0-6 0z"/></svg>';
+  const chapterColor = (ci) => { const ac = TR.BIOMES[ci].ac; return { '--ac': ac, '--acd': TR.shade(ac, 0.68) }; };
+  const starsOf = (rec) => (rec ? rec.stars : 0);
+
+  function lessons() {
+    const st = S.load();
+    const isl = S.chapters();
+    const next = L.LESSONS.find((l) => !st.lessons[l.id] && isl[CHAPTERS.findIndex((c) => c.ids.includes(l.id))].open);
+    const stars = L.LESSONS.reduce((s, l) => s + starsOf(st.lessons[l.id]), 0);
+    const trophies = isl.filter((o) => o.complete).length;
+    const at = (x, y) => ({ left: (x / TR.W * 100) + '%', top: (y / TR.H * 100) + '%' });
+    let curNode = null, freshSec = null;
+
+    const pop = h('div', { class: 'tr-pop', role: 'dialog' });
+    let popFor = null;
+    const closePop = () => { pop.classList.remove('on'); popFor = null; };
+    function openPop(coin, ci, les) {
+      if (popFor === coin) return closePop();
+      popFor = coin;
+      const ch = CHAPTERS[ci], info = isl[ci];
+      let plain = false, body;
+      if (!les) {
+        const todo = ch.ids.map((id) => L.byId(id)).find((l) => !st.lessons[l.id]);
+        plain = !info.complete;
+        body = [h('span', { class: 'ic', 'aria-hidden': 'true' }, info.complete ? '🏆' : '🎁'),
+          h('span', { class: 'eyebrow' }, `Chapter ${ci + 1} · ${ch.place}`),
+          h('h3', null, info.complete ? 'Trophy won!' : 'A trophy waits here'),
+          h('p', null, info.complete ? `You finished “${ch.title}”.` : `Finish the three lessons of “${ch.title}” to win it, plus 60 XP.`),
+          info.complete ? h('button', { class: 'go', onclick: () => lesson(L.byId(ch.ids[0]), 0) }, 'Replay the chapter')
+            : info.open && todo ? h('button', { class: 'go', onclick: () => lesson(todo, 0) }, `Next: ${todo.title}`)
+              : h('button', { class: 'go', disabled: true }, 'Locked')];
+      } else {
+        const rec = st.lessons[les.id];
+        const n = L.LESSONS.indexOf(les) + 1;
+        if (!info.open) {
+          plain = true;
+          body = [h('span', { class: 'ic', 'aria-hidden': 'true' }, '🔒'), h('span', { class: 'eyebrow' }, `Lesson ${n}`), h('h3', null, les.title),
+            h('p', null, `Finish chapter ${ci} · “${CHAPTERS[ci - 1].title}” to get to ${ch.place}.`),
+            h('button', { class: 'go', disabled: true }, 'Locked')];
+        } else {
+          body = [h('span', { class: 'ic', 'aria-hidden': 'true' }, les.icon),
+            h('span', { class: 'eyebrow' }, `Lesson ${n} · ${les.ex.length} steps`), h('h3', null, les.title),
+            h('p', null, les.blurb + '.'),
+            rec ? h('div', { class: 'row' }, starRow(starsOf(rec)), `Best ${rec.best}%`) : null,
+            h('button', { class: 'go', onclick: () => { A.unlock(); lesson(les, 0); } }, rec ? 'Play again' : 'Start lesson')];
+        }
+      }
+      pop.className = 'tr-pop' + (plain ? ' plain' : '');
+      pop.setAttribute('aria-label', les ? les.title : `Chapter ${ci + 1} trophy`);
+      pop.textContent = '';
+      body.forEach((b) => { if (b) pop.appendChild(b); });
+      const sec = coin.closest('.tr-biome'), node = coin.closest('.tr-node');
+      sec.appendChild(pop);
+      const sr = sec.getBoundingClientRect(), nr = node.getBoundingClientRect();
+      const w = pop.offsetWidth, cx = nr.left + nr.width / 2 - sr.left;
+      const left = clamp(cx, 16 + w / 2, sr.width - 16 - w / 2);
+      pop.style.left = left + 'px';
+      pop.style.top = (nr.bottom - sr.top + 16) + 'px';
+      pop.style.setProperty('--ax', (w / 2 + (cx - left)) + 'px');
+      void pop.offsetWidth;
+      pop.classList.add('on');
+      const bottom = nr.bottom + 16 + pop.offsetHeight + 100;
+      if (bottom > innerHeight) window.scrollBy({ top: bottom - innerHeight, behavior: reduced ? 'auto' : 'smooth' });
+      const go = pop.querySelector('.go:not(:disabled)');
+      if (go) go.focus({ preventScroll: true });
+    }
+
+    const secs = CHAPTERS.map((ch, ci) => {
+      const info = isl[ci];
+      const stops = TR.stops(ci);
+      const avoid = [], nodes = [];
+      const tag = (x, y, half, state, title, sub, open) => {
+        const right = x <= TR.W / 2;
+        const room = (right ? TR.W - x : x) - half - 14;
+        avoid.push(right ? [x + half, y - 30, x + half + room, y + 30] : [x - half - room, y - 30, x - half, y + 30]);
+        const side = right ? { left: ((x + half + 6) / TR.W * 100) + '%' } : { right: ((TR.W - x + half + 6) / TR.W * 100) + '%' };
+        return h('div', { class: 'tr-tag ' + state + (right ? ' r' : ' l'), 'aria-hidden': 'true', style: Object.assign(side, { top: (y / TR.H * 100) + '%', maxWidth: (room / TR.W * 100) + '%' }),
+          onclick: (e) => { e.stopPropagation(); open(); } }, h('b', null, title), h('small', null, sub));
+      };
+      ch.ids.forEach((id, li) => {
+        const les = L.byId(id), rec = st.lessons[id], n = L.LESSONS.indexOf(les) + 1;
+        const state = !info.open ? 'locked' : rec ? 'done' : les === next ? 'current' : 'open';
+        const [x, y] = stops[li];
+        const coin = h('button', { class: 'coin', 'aria-haspopup': 'dialog',
+          'aria-label': `Lesson ${n}: ${les.title}${rec ? `, completed, ${starsOf(rec)} of 3 stars` : state === 'current' ? ', up next' : state === 'locked' ? ', locked' : ''}`,
+          onclick: (e) => { e.stopPropagation(); openPop(coin, ci, les); } },
+          h('span', { class: 'tr-ico', 'aria-hidden': 'true' }, les.icon),
+          state === 'locked' ? h('span', { class: 'tr-lock', 'aria-hidden': 'true', html: LOCK_SVG }) : null);
+        const node = h('div', { class: 'tr-node ' + state, style: at(x, y) },
+          state === 'current' ? [h('span', { class: 'tr-ring', 'aria-hidden': 'true' }), h('span', { class: 'tr-start', 'aria-hidden': 'true' }, 'Start')] : null, coin);
+        nodes.push(node);
+        const sub = rec ? starRow(starsOf(rec)) : state === 'current' ? `Up next · ${les.ex.length} steps` : state === 'locked' ? 'Locked' : `${les.ex.length} steps`;
+        nodes.push(tag(x, y, 40, state, `${n} · ${les.title}`, sub, () => openPop(coin, ci, les)));
+        if (state === 'current') {
+          curNode = node;
+          const bx = clamp(x <= TR.W / 2 ? x - 86 : x + 86, 36, TR.W - 36);
+          avoid.push([x - 60, y - 110, x + 60, y], [bx - 40, y - 80, bx + 40, y + 10]);
+          nodes.push(h('div', { class: 'tr-buddy', style: at(bx, y), 'aria-hidden': 'true', html: TR.mascot() }));
+        }
+      });
+      const [tx, ty] = stops[3];
+      const tState = info.complete ? 'done' : info.open ? 'todo' : 'locked';
+      const tCoin = h('button', { class: 'coin', 'aria-haspopup': 'dialog', 'aria-label': `Chapter ${ci + 1} trophy${info.complete ? ', won' : ''}`,
+        onclick: (e) => { e.stopPropagation(); openPop(tCoin, ci, null); } }, h('span', { 'aria-hidden': 'true' }, info.complete ? '🏆' : '🎁'));
+      nodes.push(h('div', { class: 'tr-node trophy ' + tState, style: at(tx, ty) }, tCoin));
+      nodes.push(tag(tx, ty, 52, tState, info.complete ? 'Trophy won' : 'Chapter trophy', info.complete ? '+60 XP earned' : tState === 'locked' ? 'Locked' : 'Finish all 3 · +60 XP', () => openPop(tCoin, ci, null)));
+      if (ci === CHAPTERS.length - 1) nodes.push(h('p', { class: 'tr-end' }, 'More tour dates coming soon 🤘'));
+      const sec = h('section', { class: 'tr-biome' + (info.open ? '' : ' locked') + (info.fresh ? ' fresh' : ''), 'data-ci': ci, style: chapterColor(ci),
+        'aria-label': `Chapter ${ci + 1}: ${ch.title}. ${info.open ? `${info.done} of ${info.total} lessons done` : 'Locked'}`, html: TR.render(ci, avoid) }, nodes);
+      if (info.fresh && !freshSec) freshSec = sec;
+      return sec;
+    });
+
+    const banner = h('header', { class: 'tr-banner' });
+    let shown = -1;
+    function setBanner(ci) {
+      if (ci === shown) return;
+      shown = ci;
+      const ch = CHAPTERS[ci], info = isl[ci], col = chapterColor(ci);
+      banner.style.setProperty('--c', info.open ? col['--ac'] : '#5d5785');
+      banner.style.setProperty('--cd', info.open ? col['--acd'] : '#3d3670');
+      banner.textContent = '';
+      banner.append(
+        h('div', { class: 't' },
+          h('span', { class: 'eyebrow' }, `${info.open ? '' : '🔒 '}Chapter ${ci + 1} of ${CHAPTERS.length} · ${ch.place}`),
+          h('strong', null, ch.title),
+          h('div', { class: 'tr-dots', 'aria-label': `${info.done} of ${info.total} lessons done` }, ch.ids.map((id) => h('i', { class: st.lessons[id] ? 'on' : '' })))),
+        h('div', { class: 'tr-score' }, h('span', { 'aria-label': `${stars} of ${L.LESSONS.length * 3} stars` }, `⭐ ${stars}`), h('span', { 'aria-label': `${trophies} of ${CHAPTERS.length} trophies` }, `🏆 ${trophies}`)));
+    }
+    const jump = h('button', { class: 'tr-jump hide', 'aria-label': 'Jump to your next lesson', html: '<svg viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>',
+      onclick: (e) => { e.stopPropagation(); if (curNode) curNode.scrollIntoView({ behavior: reduced ? 'auto' : 'smooth', block: 'center' }); } });
+    function onScroll() {
+      const mid = innerHeight * 0.45;
+      let ci = 0;
+      secs.forEach((s, i) => { if (s.getBoundingClientRect().top < mid) ci = i; });
+      setBanner(ci);
+      if (curNode) {
+        const r = curNode.getBoundingClientRect();
+        jump.classList.toggle('hide', !(r.bottom < 110 || r.top > innerHeight - 110));
+        jump.classList.toggle('up', r.bottom < 110);
+      }
+    }
+    setBanner(0);
+    show(h('main', { class: 'lessons' }, topbar(), banner, h('div', { class: 'trail' }, secs), jump), 'learn');
+
+    addEventListener('scroll', onScroll, { passive: true });
+    const outside = (e) => { if (!pop.contains(e.target)) closePop(); };
+    document.addEventListener('click', outside);
+    disposers.push(() => { removeEventListener('scroll', onScroll); document.removeEventListener('click', outside); });
+
+    if (freshSec) {
+      const ci = +freshSec.dataset.ci;
+      later(() => toast(`${CHAPTERS[ci].mark} Chapter ${ci + 1} · ${CHAPTERS[ci].place} is open!`), reduced ? 0 : 500);
+      S.markSeen();
+    }
+    const focus = freshSec ? freshSec.querySelector('.tr-node') : curNode;
+    if (focus) focus.scrollIntoView({ block: 'center' });
+    onScroll();
+    onKey = (e) => { if (e.key === 'Escape' && pop.classList.contains('on')) closePop(); };
+  }
+
+  // =====================================================================
+  // Lesson cards
+  // =====================================================================
+  // plays a card's sound and animates its picture
+  function demo(a, vis) {
+    A.unlock(); A.stop();
+    const t0 = A.now() + 0.1;
+    const mark = (sel, cls, ms) => later(() => {
+      vis.querySelectorAll('.' + cls).forEach((n) => n.classList.remove(cls));
+      if (sel) vis.querySelectorAll(sel).forEach((n) => n.classList.add(cls));
+    }, ms);
+    if (a.drum) { K.emit(a.drum, 110, 'demo'); return; }
+    if (a.clicks) {
+      const spb = 60 / a.bpm;
+      const ev = [];
+      for (let i = 0; i < a.clicks; i++) { ev.push({ click: true, accent: i % 4 === 0, t: t0 + i * spb }); mark('[data-b="' + (i % 4) + '"]', 'now', (i * spb + 0.1) * 1000); }
+      mark(null, 'now', (a.clicks * spb + 0.1) * 1000);
+      A.schedule(ev);
+      return;
+    }
+    const div = a.div || 4, P = L.parse(a.pat, div);
+    const steps = Math.ceil(P.steps / (div * 4)) * div * 4, stepT = 60 / a.bpm / div, loops = a.loops || 1;
+    const ev = [];
+    for (let l = 0; l < loops; l++) {
+      P.notes.forEach((n) => ev.push({ id: n.id, t: t0 + (l * steps + n.step) * stepT, vel: n.acc ? 120 : 100 }));
+      for (let s = 0; s < steps; s++) {
+        const ms = ((l * steps + s) * stepT + 0.1) * 1000;
+        mark('[data-s="' + s + '"]', 'now', ms);
+        P.notes.filter((n) => n.step === s).forEach((n) => later(() => {
+          vis.querySelectorAll('.pad[data-id="' + n.id + '"]').forEach((p) => { p.classList.remove('hit'); void p.getBBox(); p.classList.add('hit'); });
+        }, ms));
+      }
+    }
+    mark(null, 'now', (loops * steps * stepT + 0.15) * 1000);
+    A.schedule(ev);
+  }
+
+  function lesson(les, idx) {
+    const card = les.cards[idx];
+    const n = L.LESSONS.indexOf(les) + 1;
+    const last = idx === les.cards.length - 1;
+    let vis = null;
+    if (card.v) {
+      if (card.v.kind === 'kit') vis = kitEl(card.v.on);
+      else if (card.v.kind === 'grid') vis = h('div', { class: 'visual', html: R.grid(card.v.pat, card.v.div) });
+      else if (card.v.kind === 'beats') vis = h('div', { class: 'visual', html: R.beats() });
+    }
+    const play = () => { if (card.a) demo(card.a, vis || document.body); };
+    const go = (d) => {
+      if (d > 0 && last) return exercise(les, 0, []);
+      const j = idx + d;
+      if (j >= 0) lesson(les, j);
+    };
+    show(h('main', { class: 'lesson' },
+      h('div', { class: 'hud' },
+        h('button', { class: 'x', onclick: lessons, 'aria-label': 'Close lesson' }, '✕'),
+        h('div', { class: 'segs' }, les.cards.map((_, i) => h('i', { class: i < idx ? 'ok' : i === idx ? 'cur' : '' })), h('i', { class: 'quizseg' })),
+        h('div', { class: 'hud-step' }, `${idx + 1}/${les.cards.length}`)),
+      h('article', { class: 'lcard' },
+        h('div', { class: 'eyebrow' }, `Lesson ${n} · ${les.title}`),
+        h('h2', null, card.h),
+        h('p', { class: 'ltext', html: bindHtml(card.p) }),
+        vis,
+        card.a ? h('button', { class: 'ghost hear', onclick: play }, speaker(), card.al || 'Hear it') : null),
+      h('div', { class: 'lnav' },
+        idx > 0 ? h('button', { class: 'ghost', onclick: () => go(-1) }, '← Back') : h('span'),
+        h('button', { class: 'btn', onclick: () => go(1) }, last ? `Play ${les.ex.length} steps` : 'Next', h('kbd', null, '↵')))));
+    onKey = (e) => {
+      if (onButton(e)) return;
+      if (e.key === 'Enter' || e.key === 'ArrowRight') { e.preventDefault(); go(1); }
+      else if (e.key === 'ArrowLeft') go(-1);
+      else if (e.key === ' ') { e.preventDefault(); play(); }
+      else if (e.key === 'Escape') lessons();
+    };
+  }
+
+  // =====================================================================
+  // Exercises
+  // =====================================================================
+  const TYPE = { find: '🎯 Find it', ear: '👂 Ear', play: '🎮 Play along' };
+  function verdict(acc, timed) {
+    return acc >= 90 ? [timed ? 'Perfect groove!' : 'Spot on!', 'great'] : acc >= 75 ? [timed ? 'Great timing!' : 'Great job!', 'good'] : acc >= 50 ? ['Nice, keep going', 'good'] : ['Tough one!', 'low'];
+  }
+  function exercise(les, i, scores) {
+    const ex = les.ex[i];
+    const kit = kitEl([]);
+    let engine = null, phase = 'ready';
+    const resBox = h('div', { class: 'exres', 'aria-live': 'polite' });
+    const ctrls = h('div', { class: 'exctl' });
+    const next = () => {
+      if (i + 1 < les.ex.length) exercise(les, i + 1, scores);
+      else results(les, scores);
+    };
+    function done(res) {
+      scores[i] = Math.max(scores[i] || 0, res.acc);
+      phase = 'done';
+      segs.children[i].className = res.acc >= 75 ? 'ok' : res.acc >= 50 ? 'meh' : 'no';
+      const [title, tone] = verdict(res.acc, ex.t === 'play');
+      resBox.className = 'exres on t-' + tone;
+      resBox.textContent = '';
+      let tip = null;
+      if (ex.t === 'play') {
+        if (res.early > res.late * 2 && res.early >= 3) tip = 'You’re rushing a little: wait for the click.';
+        else if (res.late > res.early * 2 && res.late >= 3) tip = 'You’re a bit late. If it keeps happening with your pad, try Calibrate in Settings.';
+        else if (res.extra >= 4) tip = 'A few extra hits: only play when a gem reaches the line.';
+      } else if (res.acc < 100) tip = ex.t === 'ear' ? 'Use “Play it again” as many times as you like.' : 'Look at the key on each chip before you hit.';
+      [h('div', { class: 'exres-head' }, h('strong', null, `${res.acc}%`), h('span', null, title)),
+        ex.t === 'play' ? h('div', { class: 'tiles' },
+          tile('Perfect', res.perfect, 't-mint'), tile('Good', res.good, 't-yellow'), tile('Miss', res.miss, 't-coral'), tile('Points', res.pts.toLocaleString('en-US'), 't-violet')) : null,
+        tip ? h('p', { class: 'extip' }, tip) : null].forEach((n) => { if (n) resBox.appendChild(n); });
+      A.sfx(res.acc >= 75 ? 'win' : res.acc >= 50 ? 'good' : 'bad');
+      setCtrls();
+      later(() => { const b = ctrls.querySelector('.btn'); if (b) b.focus({ preventScroll: true }); }, 50);
+    }
+    const hooks = { done, target: (ids) => kit.target(ids), previewed: () => { phase = 'ready'; setCtrls(); } };
+    engine = ex.t === 'find' ? PL.find(ex, hooks) : ex.t === 'ear' ? PL.ear(ex, hooks) : PL.highway(ex, hooks);
+
+    function start() { A.unlock(); resBox.className = 'exres'; phase = 'run'; setCtrls(); engine.start(); }
+    function preview() { phase = 'preview'; setCtrls(); engine.preview(); }
+    function setCtrls() {
+      ctrls.textContent = '';
+      if (ex.t !== 'play') {
+        if (phase === 'done') ctrls.append(h('button', { class: 'ghost', onclick: start }, '↻ Again'), h('button', { class: 'btn', onclick: next }, i + 1 < les.ex.length ? 'Next' : 'Finish', h('kbd', null, '↵')));
+        return;
+      }
+      if (phase === 'run' || phase === 'preview') ctrls.append(h('button', { class: 'ghost', onclick: () => { engine.stop(); phase = 'ready'; setCtrls(); } }, '■ Stop'));
+      else if (phase === 'done') ctrls.append(h('button', { class: 'ghost', onclick: start }, '↻ Try again'), h('button', { class: 'btn', onclick: next }, i + 1 < les.ex.length ? 'Next' : 'Finish', h('kbd', null, '↵')));
+      else ctrls.append(h('button', { class: 'ghost', onclick: preview }, speaker(), 'Hear it first'), h('button', { class: 'btn', onclick: start }, '▶ Start', h('kbd', null, '↵')));
+    }
+    const sub = ex.t === 'play'
+      ? (ex.echo ? `${ex.bpm} BPM · after 4 clicks, listen to one bar, then copy it` : `${ex.bpm} BPM · wait for 4 clicks, then hit each gem as it reaches the line`)
+      : ex.t === 'find' ? 'Hit the drums in order. No rush.' : 'Listen, then hit the drum you heard.';
+    const segs = h('div', { class: 'segs' }, les.ex.map((_, k) => h('i', { class: k < i ? (scores[k] >= 75 ? 'ok' : scores[k] >= 50 ? 'meh' : 'no') : k === i ? 'cur' : '' })));
+    show(h('main', { class: 'lesson exscreen' },
+      h('div', { class: 'hud' },
+        h('button', { class: 'x', onclick: lessons, 'aria-label': 'Close lesson' }, '✕'),
+        segs,
+        h('div', { class: 'hud-step' }, `${i + 1}/${les.ex.length}`)),
+      h('article', { class: 'lcard excard' },
+        h('div', { class: 'eyebrow' }, `${TYPE[ex.t]} · ${les.title}`),
+        h('h2', null, ex.title),
+        h('p', { class: 'exsub' }, sub),
+        engine.el, resBox, ctrls),
+      kit));
+    disposers.push(() => engine.stop());   // after show(), which runs the previous screen's disposers
+    setCtrls();
+    if (ex.t !== 'play') later(start, 250);
+    onKey = (e) => {
+      if (onButton(e)) return;
+      if (e.key === 'Escape') lessons();
+      else if (e.key === 'Enter') {
+        e.preventDefault();
+        if (phase === 'done') next();
+        else if (ex.t === 'play' && phase === 'ready') start();
+      }
+    };
+  }
+  const tile = (label, v, cls) => h('div', { class: 'tile ' + cls }, h('em', null, label), h('strong', null, String(v)));
+
+  // =====================================================================
+  // Results
+  // =====================================================================
+  function results(les, scores) {
+    const acc = Math.round(scores.reduce((a, b) => a + (b || 0), 0) / les.ex.length);
+    const out = S.finishLesson(les, acc);
+    const tone = out.stars === 3 ? 'great' : out.stars === 2 ? 'good' : 'low';
+    const ci = CHAPTERS.findIndex((c) => c.ids.includes(les.id));
+    show(h('main', { class: 'results center' },
+      h('div', { class: 'emblem e-' + tone },
+        h('span', { class: 'emblem-ring' }), h('span', { class: 'emblem-ring r2' }),
+        h('span', { class: 'emblem-core' }, les.icon),
+        h('span', { class: 'emblem-stars', 'aria-label': out.stars + ' of 3 stars' }, [0, 1, 2].map((k) => h('i', { class: k < out.stars ? 'on' : '' }, '★')))),
+      h('p', { class: 'eyebrow' }, `Lesson ${L.LESSONS.indexOf(les) + 1} complete`),
+      h('h1', null, les.title),
+      h('div', { class: 'tiles' }, tile('Accuracy', acc + '%', 't-mint'), tile('Stars', out.stars + ' / 3', 't-yellow'), tile('XP', '+' + out.xp, 't-violet')),
+      out.trophy !== null ? h('div', { class: 'prize' }, h('span', { class: 'prize-ico' }, '🏆'),
+        h('div', null, h('span', { class: 'eyebrow' }, `Chapter ${ci + 1} · ${CHAPTERS[ci].place}`), h('strong', null, 'Trophy won!'), h('span', null, `+60 XP. ${ci + 1 < CHAPTERS.length ? `Next stop: ${CHAPTERS[ci + 1].place}.` : 'You finished the tour!'}`))) : null,
+      out.stars < 3 ? h('p', { class: 'fine' }, out.stars === 2 ? 'Score 90% or more for 3 stars.' : 'Score 70% for 2 stars, 90% for 3. Replay any time.') : null,
+      h('button', { class: 'btn big', onclick: lessons }, 'Back to the trail', h('kbd', null, '↵')),
+      h('button', { class: 'ghost', onclick: () => lesson(les, 0) }, '↻ Replay lesson')));
+    A.sfx('win');
+    if (out.stars === 3 || out.trophy !== null) confetti();
+    if (out.levelUp) later(() => toast(`⬆️ Level ${out.levelUp.level}: ${out.levelUp.title}`), 700);
+    onKey = (e) => { if (e.key === 'Enter' && !onButton(e)) lessons(); };
+  }
+
+  // =====================================================================
+  // Jam: free play with a metronome and a hit monitor
+  // =====================================================================
+  function jam() {
+    const kit = kitEl([]);
+    const mon = h('p', { class: 'monitor', 'aria-live': 'polite' }, 'Hit something! Every hit shows up here, so it’s handy for checking your binds.');
+    const bpmOut = h('b', null, '90');
+    const range = h('input', { type: 'range', min: 40, max: 200, value: 90, 'aria-label': 'Tempo in BPM' });
+    let bpm = 90, on = false, nextT = 0, beat = 0, timer = 0;
+    const tick = () => {
+      while (nextT < A.now() + 0.12) { A.click(beat % 4 === 0, nextT); nextT += 60 / bpm; beat++; }
+    };
+    const toggle = h('button', { class: 'ghost', onclick: () => {
+      A.unlock(); on = !on;
+      toggle.textContent = on ? '■ Stop click' : '▶ Start click';
+      clearInterval(timer);
+      if (on) { nextT = A.now() + 0.1; beat = 0; timer = setInterval(tick, 25); tick(); } else A.stop();
+    } }, '▶ Start click');
+    range.addEventListener('input', () => { bpm = +range.value; bpmOut.textContent = bpm; });
+    const daw = K.daw(S.load().settings.daw);
+    const describe = () => {
+      const l = K.status.last;
+      if (!l) return;
+      if (!l.id) { mon.innerHTML = `MIDI note <b>${l.note}</b> (${K.noteName(l.note, daw.oct)}) isn’t bound to a drum. Set it in Settings → Learn.`; return; }
+      const d = K.byId(l.id), b = K.bind(l.id);
+      const src = { key: 'keyboard', midi: 'MIDI', serial: 'Handpad (serial)', tap: 'screen tap', demo: 'demo' }[l.src] || l.src;
+      mon.innerHTML = `<b style="color:${d.color}">${d.name}</b> · key ${R.esc(K.keyLabel(b.key))} · note ${b.note} (${K.noteName(b.note, daw.oct)}) · from ${src}${l.src === 'midi' || l.src === 'serial' ? ' · velocity ' + l.vel : ''}`;
+    };
+    show(h('main', { class: 'jam' }, topbar(),
+      h('div', { class: 'learn-head' }, h('h1', null, 'Jam'), h('p', { class: 'mute' }, `Play anything you like. Keys follow ${daw.short || daw.name}.`)),
+      kit,
+      mon,
+      h('section', { class: 'card metro' }, h('div', { class: 'metro-top' }, h('strong', null, 'Metronome'), h('span', null, bpmOut, ' BPM')), range, toggle)), 'jam');
+    // listeners go in after show(), which clears the previous screen's
+    const off = K.on(() => describe());
+    let lastNote = null;
+    const poll = setInterval(() => { const l = K.status.last; if (l && !l.id && l !== lastNote) { lastNote = l; describe(); } }, 150);
+    disposers.push(off, () => clearInterval(poll), () => clearInterval(timer));
+  }
+
+  // =====================================================================
+  // Settings: DAW, binds, pad connection, timing, sound, progress
+  // =====================================================================
+  function settings() {
+    const st = S.load();
+    const wrap = h('main', { class: 'settings' });
+    const daw = K.daw(st.settings.daw);
+    let learning = null;
+
+    const tip = h('p', { class: 'daw-tip' }, daw.tip);
+    const sel = dawSelect(() => settings());
+    const table = h('div', { class: 'binds', role: 'table', 'aria-label': 'Drum binds' },
+      h('div', { class: 'brow bhead', role: 'row' }, h('span', null, 'Drum'), h('span', null, 'Key'), h('span', null, 'MIDI note'), h('span')),
+      K.DRUMS.map((d) => {
+        const b = K.bind(d.id);
+        const learnBtn = h('button', { class: 'ghost small', onclick: () => learn(d.id, row, learnBtn) }, 'Learn');
+        const row = h('div', { class: 'brow', role: 'row', 'data-drum': d.id, style: { '--c': d.color } },
+          h('span', { class: 'bname' }, h('i', { class: 'dot' }), d.name),
+          h('span', null, h('kbd', { class: 'bind', style: { '--c': d.color } }, K.keyLabel(b.key))),
+          h('span', { class: 'bnote' }, b.note == null ? '—' : `${b.note} · ${K.noteName(b.note, daw.oct)}`),
+          learnBtn);
+        return row;
+      }));
+    function learn(id, row, btn) {
+      if (learning) { K.cancelLearn(); learning.row.classList.remove('learning'); learning.btn.textContent = 'Learn'; if (learning.id === id) { learning = null; return; } }
+      learning = { id, row, btn };
+      row.classList.add('learning');
+      btn.textContent = 'Cancel';
+      A.unlock();
+      K.learn((got) => {
+        row.classList.remove('learning');
+        learning = null;
+        if (!got) { btn.textContent = 'Learn'; return; }
+        S.update((s) => {
+          const base = s.settings.daw === 'custom' ? s.settings.custom : K.daw(s.settings.daw).binds;
+          const c = JSON.parse(JSON.stringify(base || K.daw('handpad').binds));
+          K.DRUMS.forEach((dr) => { if (!c[dr.id]) c[dr.id] = { key: null, note: dr.note }; });
+          const field = got.key !== undefined ? 'key' : 'note';
+          const val = got.key !== undefined ? got.key : got.note;
+          // if another drum already uses it, the two swap
+          K.DRUMS.forEach((dr) => { if (dr.id !== id && c[dr.id][field] === val) c[dr.id][field] = c[id][field]; });
+          c[id][field] = val;
+          s.settings.custom = c;
+          s.settings.daw = 'custom';
+        });
+        applySettings();
+        toast(`${K.byId(id).name} → ${got.key !== undefined ? 'key ' + K.keyLabel(got.key) : 'note ' + got.note}`);
+        settings();
+      });
+    }
+    const resetBinds = h('button', { class: 'ghost small', onclick: () => {
+      S.update((s) => { s.settings.custom = JSON.parse(JSON.stringify(K.daw('handpad').binds)); });
+      applySettings(); settings(); toast('Custom binds reset to the Handpad defaults');
+    } }, 'Reset custom binds');
+
+    // pad connection
+    const padMsg = h('p', { class: 'mute small' }, '');
+    const padStatus = () => {
+      const s = K.status;
+      padMsg.textContent = s.serial ? 'Handpad connected over serial.' : s.midi.length ? `MIDI: ${s.midi.join(', ')}` : 'No pad connected. You can still play with the keyboard or by tapping the kit.';
+    };
+    padStatus();
+    const midiBtn = h('button', { class: 'ghost', onclick: async () => { const err = await K.connectMidi(); if (err) toast(err); padStatus(); } }, '🎹 Connect MIDI');
+    const serialBtn = h('button', { class: 'ghost', onclick: async () => { const err = await K.connectSerial(); if (err) toast(err); padStatus(); } }, '🔌 Connect serial');
+
+    // timing
+    const offOut = h('b', null, st.settings.offset + ' ms');
+    const offRange = h('input', { type: 'range', min: -150, max: 200, step: 5, value: st.settings.offset, 'aria-label': 'Timing offset in milliseconds' });
+    offRange.addEventListener('input', () => { offOut.textContent = offRange.value + ' ms'; });
+    offRange.addEventListener('change', () => { S.update((s) => { s.settings.offset = +offRange.value; }); applySettings(); });
+    const calMsg = h('p', { class: 'mute small', 'aria-live': 'polite' }, '');
+    const calBtn = h('button', { class: 'ghost', onclick: calibrate }, '🎯 Calibrate');
+    function calibrate() {
+      A.unlock(); A.stop();
+      const spb = 60 / 90, t0 = A.now() + 0.4, n = 16;
+      const clicks = [...Array(n)].map((_, i) => t0 + i * spb);
+      A.schedule(clicks.map((t, i) => ({ click: true, accent: i % 4 === 0, t })));
+      const deltas = [];
+      calBtn.disabled = true;
+      calMsg.textContent = 'Listen to 4 clicks, then hit any drum on every click…';
+      const off = K.on(() => {
+        const t = A.now() - A.latency();
+        const near = clicks.reduce((b, c) => (Math.abs(c - t) < Math.abs(b - t) ? c : b), clicks[0]);
+        if (near >= clicks[4] && Math.abs(near - t) < spb / 2) deltas.push(t - near);
+      });
+      later(() => {
+        off(); calBtn.disabled = false;
+        if (deltas.length < 6) { calMsg.textContent = 'Not enough hits. Try again and hit along with every click.'; return; }
+        deltas.sort((a, b) => a - b);
+        const ms = Math.round(deltas[Math.floor(deltas.length / 2)] * 1000 / 5) * 5;
+        const v = clamp(ms, -150, 200);
+        S.update((s) => { s.settings.offset = v; }); applySettings();
+        offRange.value = v; offOut.textContent = v + ' ms';
+        calMsg.textContent = `Done: your hits land ${Math.abs(v)} ms ${v >= 0 ? 'late' : 'early'} on average, so the game now allows for that.`;
+      }, (0.4 + n * spb + 0.3) * 1000);
+    }
+
+    // sound
+    const slider = (label, key) => {
+      const r = h('input', { type: 'range', min: 0, max: 1, step: 0.05, value: st.settings[key], 'aria-label': label });
+      r.addEventListener('input', () => { S.update((s) => { s.settings[key] = +r.value; }); applySettings(); });
+      r.addEventListener('change', () => { if (key === 'click') { A.unlock(); A.click(true); } else K.emit('snare', 100, 'demo'); });
+      return h('label', { class: 'srow' }, h('span', null, label), r);
+    };
+
+    let armed = false;
+    const resetBtn = h('button', { class: 'ghost danger', onclick: () => {
+      if (!armed) { armed = true; resetBtn.textContent = 'Tap again to erase all progress'; later(() => { armed = false; resetBtn.textContent = 'Reset progress'; }, 3000); return; }
+      S.reset(); toast('Progress erased'); onboarding();
+    } }, 'Reset progress');
+
+    wrap.append(topbar(),
+      h('div', { class: 'learn-head' }, h('h1', null, 'Settings')),
+      h('section', { class: 'card' },
+        h('h3', null, 'Your DAW'),
+        h('p', { class: 'mute small' }, 'Your pad plays your DAW’s drums, so Backbeat listens for the same keys and notes. Pick yours and the binds follow its defaults.'),
+        sel, tip,
+        table,
+        h('div', { class: 'row-end' }, h('span', { class: 'mute small' }, daw.id === 'custom' ? 'Press Learn, then a key or a pad.' : 'Defaults are a starting point. Press Learn on any drum to make your own (switches to Custom).'),
+          daw.id === 'custom' ? resetBinds : null)),
+      h('section', { class: 'card' },
+        h('h3', null, 'Connect your pad'),
+        h('p', { class: 'mute small' }, 'Our ESP32 DevKit boards send MIDI over serial. A pad with USB or Bluetooth MIDI shows up under MIDI. Chrome or Edge.'),
+        h('div', { class: 'row' }, midiBtn, serialBtn), padMsg),
+      h('section', { class: 'card' },
+        h('h3', null, 'Timing'),
+        h('p', { class: 'mute small' }, 'If the game says “Late” when you feel on time (common over Bluetooth), calibrate once.'),
+        h('div', { class: 'srow' }, h('span', null, 'Offset'), offRange, offOut),
+        h('div', { class: 'row' }, calBtn), calMsg),
+      h('section', { class: 'card' }, h('h3', null, 'Sound'), slider('Drums volume', 'volume'), slider('Click volume', 'click')),
+      h('section', { class: 'card' }, h('h3', null, 'Progress'), h('p', { class: 'mute small' }, 'Saved in this browser only.'), resetBtn));
+    show(wrap, 'settings');
+    disposers.push(K.onStatus(padStatus));
+    onKey = (e) => { if (e.key === 'Escape' && learning) { K.cancelLearn(); learning.row.classList.remove('learning'); learning.btn.textContent = 'Learn'; learning = null; } };
+  }
+
+  // ---------- start ----------
+  if (S.load().onboarded) lessons(); else onboarding();
+  // handy while developing: Backbeat.lesson('rock') or Backbeat.ex('rock', 3) from the console
+  window.Backbeat = { lesson: (id) => lesson(L.byId(id), 0), ex: (id, i) => exercise(L.byId(id), i || 0, []), results: (id, acc) => results(L.byId(id), L.byId(id).ex.map(() => acc || 80)), lessons, settings, jam };
+})();
