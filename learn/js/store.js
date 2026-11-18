@@ -71,6 +71,7 @@
       if (!first) xp = Math.round(xp / 2);
       s.lessons[les.id] = { best: Math.max(pct, rec ? rec.best : 0), stars: Math.max(stars, rec ? rec.stars : 0), plays: (rec ? rec.plays : 0) + 1 };
       if (!s.days.includes(today())) s.days.push(today());
+      s.daily = { date: today(), n: (s.daily && s.daily.date === today() ? s.daily.n : 0) + 1 };
       s.xp += xp;
     });
     const after = chapters();
@@ -86,6 +87,7 @@
 
   window.Store = {
     load, save, update, chapters, markSeen, finishLesson, levelInfo, streak,
+    todayCount: () => { const d = load().daily; return d && d.date === today() ? d.n : 0; },
     reset: () => { const keep = load().settings; cache = DEF(); cache.settings = keep; save(); },
   };
 })();

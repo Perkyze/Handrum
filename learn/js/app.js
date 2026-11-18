@@ -18,15 +18,17 @@
   // ---------- screen plumbing ----------
   let disposers = [], onKey = null;
   const later = (fn, ms) => { const id = setTimeout(fn, ms); disposers.push(() => clearTimeout(id)); return id; };
-  function show(node, tab) {
+  // tab: 'learn' | 'jam' | 'settings' shows the floating dock; wide: the desktop three-column layout (Learn)
+  function show(node, tab, wide) {
     disposers.forEach((f) => f());
     disposers = []; onKey = null;
     K.cancelLearn();
     A.stop();
-    document.querySelectorAll('.confetti, .toast, .tabbar').forEach((n) => n.remove());
+    document.querySelectorAll('.confetti, .toast, .dock, .drawer, .upbar, .tr-jump').forEach((n) => n.remove());
     app.textContent = '';
+    app.classList.toggle('wide', !!wide);
     node.classList.add('screen');
-    if (tab) { node.classList.add('tabbed'); document.body.appendChild(tabbar(tab)); }
+    if (tab) { node.classList.add('tabbed'); document.body.appendChild(dock(tab)); }
     app.appendChild(node);
     window.scrollTo(0, 0);
   }
@@ -99,10 +101,11 @@
     jam: '<svg viewBox="0 0 24 24"><ellipse cx="12" cy="9" rx="8" ry="3"/><path d="M4 9v7c0 1.7 3.6 3 8 3s8-1.3 8-3V9"/><path d="M8 3l3 5M16 3l-3 5"/></svg>',
     settings: '<svg viewBox="0 0 24 24"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2.2"/><circle cx="10" cy="17" r="2.2"/></svg>',
   };
-  function tabbar(active) {
+  // the floating glass dock at the bottom of the window
+  function dock(active) {
     const tabs = [['learn', 'Learn', lessons], ['jam', 'Jam', jam], ['settings', 'Settings', settings]];
-    return h('nav', { class: 'tabbar', 'aria-label': 'Main' }, h('div', { class: 'tabbar-in' },
-      tabs.map(([id, label, fn]) => h('button', { class: 'tab' + (id === active ? ' on' : ''), 'aria-current': id === active ? 'page' : null, onclick: () => { if (id !== active) fn(); } },
+    return h('nav', { class: 'dock', 'aria-label': 'Main' }, h('div', { class: 'dock-in' },
+      tabs.map(([id, label, fn]) => h('button', { class: 'dk' + (id === active ? ' on' : ''), 'aria-current': id === active ? 'page' : null, onclick: () => { if (id !== active) fn(); } },
         h('span', { class: 'tab-ico', 'aria-hidden': 'true', html: TAB_ICONS[id] }), h('span', null, label)))));
   }
   function inputChip() {
@@ -187,96 +190,92 @@
   const LOCK_SVG = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 10V7a5 5 0 0 1 10 0v3h1a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-8a2 2 0 0 1 2-2zm2 0h6V7a3 3 0 0 0-6 0z"/></svg>';
   const chapterColor = (ci) => { const ac = TR.BIOMES[ci].ac; return { '--ac': ac, '--acd': TR.shade(ac, 0.68) }; };
   const starsOf = (rec) => (rec ? rec.stars : 0);
+  const STEP_ICON = { find: '🎯', ear: '👂', play: '🎮' };
+  const stepMeta = (e) => e.t === 'play' ? `${e.bpm} BPM${e.echo ? ' · echo' : ''}` : e.t === 'find' ? 'no timer' : 'listen';
 
+  // ---------- the slide-in lesson drawer ----------
+  let drawerEl = null, drawerFor = null;
+  function closeDrawer() {
+    if (!drawerEl) return;
+    const d = drawerEl;
+    d.classList.remove('on');
+    setTimeout(() => d.remove(), 240);
+    drawerEl = null; drawerFor = null;
+  }
+  function openDrawer(ci, les, key) {
+    if (drawerFor === key) return closeDrawer();
+    closeDrawer();
+    const st = S.load(), isl = S.chapters();
+    const ch = CHAPTERS[ci], info = isl[ci];
+    let body;
+    if (!les) {
+      const todo = ch.ids.map((id) => L.byId(id)).find((l) => !st.lessons[l.id]);
+      body = [h('div', { class: 'dw-head' }, h('span', { class: 'dw-ic' }, info.complete ? '🏆' : '🎁'),
+          h('div', null, h('span', { class: 'eyebrow' }, `Chapter ${ci + 1} · ${ch.place}`), h('h3', null, info.complete ? 'Trophy won!' : 'Chapter trophy'))),
+        h('p', { class: 'dw-blurb' }, info.complete ? `You finished “${ch.title}” and earned 60 XP.` : `Finish the three lessons of “${ch.title}” to win it, plus 60 XP.`),
+        h('ol', { class: 'dw-steps' }, ch.ids.map((id) => { const l = L.byId(id), r = st.lessons[id]; return h('li', { class: r ? 'done' : '' }, h('span', null, l.icon), l.title, h('em', null, r ? '★'.repeat(r.stars) : 'to do')); })),
+        h('div', { class: 'dw-acts' }, info.complete ? h('button', { class: 'btn', onclick: () => lesson(L.byId(ch.ids[0]), 0) }, 'Replay the chapter')
+          : info.open && todo ? h('button', { class: 'btn', onclick: () => { A.unlock(); lesson(todo, 0); } }, `Next: ${todo.title}`, h('kbd', null, '↵'))
+            : h('button', { class: 'btn', disabled: true }, '🔒 Locked'))];
+    } else {
+      const rec = st.lessons[les.id], n = L.LESSONS.indexOf(les) + 1;
+      const hear = les.cards.find((c) => c.a);
+      body = [h('div', { class: 'dw-head' }, h('span', { class: 'dw-ic' }, les.icon),
+          h('div', null, h('span', { class: 'eyebrow' }, `Lesson ${n} · ${ch.place}`), h('h3', null, les.title))),
+        h('p', { class: 'dw-blurb' }, les.blurb + '.'),
+        rec ? h('div', { class: 'dw-rec' }, starRow(starsOf(rec)), `Best ${rec.best}% · played ${rec.plays}×`) : null,
+        h('p', { class: 'eyebrow' }, `What you’ll do · ${les.ex.length} steps`),
+        h('ol', { class: 'dw-steps' }, les.ex.map((e) => h('li', null, h('span', null, STEP_ICON[e.t]), e.title, h('em', null, stepMeta(e))))),
+        h('div', { class: 'dw-acts' },
+          !info.open ? h('button', { class: 'btn', disabled: true }, `🔒 Finish chapter ${ci} first`)
+            : h('button', { class: 'btn', onclick: () => { A.unlock(); lesson(les, 0); } }, rec ? 'Play again' : 'Start lesson', h('kbd', null, '↵')),
+          hear && info.open ? h('button', { class: 'ghost', onclick: () => demo(hear.a, document.body) }, speaker(), 'Hear it') : null)];
+    }
+    const el = h('aside', { class: 'drawer', role: 'dialog', 'aria-label': les ? les.title : `Chapter ${ci + 1} trophy`, style: chapterColor(ci) },
+      h('button', { class: 'x dw-x', onclick: closeDrawer, 'aria-label': 'Close' }, '✕'), body);
+    document.body.appendChild(el);
+    void el.offsetWidth;
+    el.classList.add('on');
+    drawerEl = el; drawerFor = key;
+    const go = el.querySelector('.btn:not(:disabled)');
+    if (go) go.focus({ preventScroll: true });
+  }
+
+  // ---------- Learn: tour rail · scenic trail · progress rail ----------
   function lessons() {
     const st = S.load();
     const isl = S.chapters();
-    const next = L.LESSONS.find((l) => !st.lessons[l.id] && isl[CHAPTERS.findIndex((c) => c.ids.includes(l.id))].open);
+    const chOf = (l) => CHAPTERS.findIndex((c) => c.ids.includes(l.id));
+    const next = L.LESSONS.find((l) => !st.lessons[l.id] && isl[chOf(l)].open);
+    const curCi = next ? chOf(next) : CHAPTERS.length - 1;
     const stars = L.LESSONS.reduce((s, l) => s + starsOf(st.lessons[l.id]), 0);
     const trophies = isl.filter((o) => o.complete).length;
     const at = (x, y) => ({ left: (x / TR.W * 100) + '%', top: (y / TR.H * 100) + '%' });
     let curNode = null, freshSec = null;
 
-    const pop = h('div', { class: 'tr-pop', role: 'dialog' });
-    let popFor = null;
-    const closePop = () => { pop.classList.remove('on'); popFor = null; };
-    function openPop(coin, ci, les) {
-      if (popFor === coin) return closePop();
-      popFor = coin;
-      const ch = CHAPTERS[ci], info = isl[ci];
-      let plain = false, body;
-      if (!les) {
-        const todo = ch.ids.map((id) => L.byId(id)).find((l) => !st.lessons[l.id]);
-        plain = !info.complete;
-        body = [h('span', { class: 'ic', 'aria-hidden': 'true' }, info.complete ? '🏆' : '🎁'),
-          h('span', { class: 'eyebrow' }, `Chapter ${ci + 1} · ${ch.place}`),
-          h('h3', null, info.complete ? 'Trophy won!' : 'A trophy waits here'),
-          h('p', null, info.complete ? `You finished “${ch.title}”.` : `Finish the three lessons of “${ch.title}” to win it, plus 60 XP.`),
-          info.complete ? h('button', { class: 'go', onclick: () => lesson(L.byId(ch.ids[0]), 0) }, 'Replay the chapter')
-            : info.open && todo ? h('button', { class: 'go', onclick: () => lesson(todo, 0) }, `Next: ${todo.title}`)
-              : h('button', { class: 'go', disabled: true }, 'Locked')];
-      } else {
-        const rec = st.lessons[les.id];
-        const n = L.LESSONS.indexOf(les) + 1;
-        if (!info.open) {
-          plain = true;
-          body = [h('span', { class: 'ic', 'aria-hidden': 'true' }, '🔒'), h('span', { class: 'eyebrow' }, `Lesson ${n}`), h('h3', null, les.title),
-            h('p', null, `Finish chapter ${ci} · “${CHAPTERS[ci - 1].title}” to get to ${ch.place}.`),
-            h('button', { class: 'go', disabled: true }, 'Locked')];
-        } else {
-          body = [h('span', { class: 'ic', 'aria-hidden': 'true' }, les.icon),
-            h('span', { class: 'eyebrow' }, `Lesson ${n} · ${les.ex.length} steps`), h('h3', null, les.title),
-            h('p', null, les.blurb + '.'),
-            rec ? h('div', { class: 'row' }, starRow(starsOf(rec)), `Best ${rec.best}%`) : null,
-            h('button', { class: 'go', onclick: () => { A.unlock(); lesson(les, 0); } }, rec ? 'Play again' : 'Start lesson')];
-        }
-      }
-      pop.className = 'tr-pop' + (plain ? ' plain' : '');
-      pop.setAttribute('aria-label', les ? les.title : `Chapter ${ci + 1} trophy`);
-      pop.textContent = '';
-      body.forEach((b) => { if (b) pop.appendChild(b); });
-      const sec = coin.closest('.tr-biome'), node = coin.closest('.tr-node');
-      sec.appendChild(pop);
-      const sr = sec.getBoundingClientRect(), nr = node.getBoundingClientRect();
-      const w = pop.offsetWidth, cx = nr.left + nr.width / 2 - sr.left;
-      const left = clamp(cx, 16 + w / 2, sr.width - 16 - w / 2);
-      pop.style.left = left + 'px';
-      pop.style.top = (nr.bottom - sr.top + 16) + 'px';
-      pop.style.setProperty('--ax', (w / 2 + (cx - left)) + 'px');
-      void pop.offsetWidth;
-      pop.classList.add('on');
-      const bottom = nr.bottom + 16 + pop.offsetHeight + 100;
-      if (bottom > innerHeight) window.scrollBy({ top: bottom - innerHeight, behavior: reduced ? 'auto' : 'smooth' });
-      const go = pop.querySelector('.go:not(:disabled)');
-      if (go) go.focus({ preventScroll: true });
-    }
-
     const secs = CHAPTERS.map((ch, ci) => {
       const info = isl[ci];
       const stops = TR.stops(ci);
       const avoid = [], nodes = [];
-      const tag = (x, y, half, state, title, sub, open) => {
-        const right = x <= TR.W / 2;
-        const room = (right ? TR.W - x : x) - half - 14;
-        avoid.push(right ? [x + half, y - 30, x + half + room, y + 30] : [x - half - room, y - 30, x - half, y + 30]);
-        const side = right ? { left: ((x + half + 6) / TR.W * 100) + '%' } : { right: ((TR.W - x + half + 6) / TR.W * 100) + '%' };
-        return h('div', { class: 'tr-tag ' + state + (right ? ' r' : ' l'), 'aria-hidden': 'true', style: Object.assign(side, { top: (y / TR.H * 100) + '%', maxWidth: (room / TR.W * 100) + '%' }),
-          onclick: (e) => { e.stopPropagation(); open(); } }, h('b', null, title), h('small', null, sub));
+      // a small dark name chip under each coin
+      const chip = (x, y, off, state, title, sub, open) => {
+        avoid.push([x - 80, y + off - 6, x + 80, y + off + 34]);
+        return h('div', { class: 'tr-chip ' + state, 'aria-hidden': 'true', style: at(x, y + off), onclick: (e) => { e.stopPropagation(); open(); } }, h('b', null, title), sub ? h('small', null, sub) : null);
       };
       ch.ids.forEach((id, li) => {
         const les = L.byId(id), rec = st.lessons[id], n = L.LESSONS.indexOf(les) + 1;
         const state = !info.open ? 'locked' : rec ? 'done' : les === next ? 'current' : 'open';
         const [x, y] = stops[li];
+        const open = () => openDrawer(ci, les, 'l' + id);
         const coin = h('button', { class: 'coin', 'aria-haspopup': 'dialog',
           'aria-label': `Lesson ${n}: ${les.title}${rec ? `, completed, ${starsOf(rec)} of 3 stars` : state === 'current' ? ', up next' : state === 'locked' ? ', locked' : ''}`,
-          onclick: (e) => { e.stopPropagation(); openPop(coin, ci, les); } },
+          onclick: (e) => { e.stopPropagation(); open(); } },
           h('span', { class: 'tr-ico', 'aria-hidden': 'true' }, les.icon),
           state === 'locked' ? h('span', { class: 'tr-lock', 'aria-hidden': 'true', html: LOCK_SVG }) : null);
         const node = h('div', { class: 'tr-node ' + state, style: at(x, y) },
           state === 'current' ? [h('span', { class: 'tr-ring', 'aria-hidden': 'true' }), h('span', { class: 'tr-start', 'aria-hidden': 'true' }, 'Start')] : null, coin);
         nodes.push(node);
-        const sub = rec ? starRow(starsOf(rec)) : state === 'current' ? `Up next · ${les.ex.length} steps` : state === 'locked' ? 'Locked' : `${les.ex.length} steps`;
-        nodes.push(tag(x, y, 40, state, `${n} · ${les.title}`, sub, () => openPop(coin, ci, les)));
+        nodes.push(chip(x, y, 40, state, `${n} · ${les.title}`, rec ? '★'.repeat(starsOf(rec)) + '☆'.repeat(3 - starsOf(rec)) : null, open));
         if (state === 'current') {
           curNode = node;
           const bx = clamp(x <= TR.W / 2 ? x - 86 : x + 86, 36, TR.W - 36);
@@ -286,10 +285,11 @@
       });
       const [tx, ty] = stops[3];
       const tState = info.complete ? 'done' : info.open ? 'todo' : 'locked';
+      const tOpen = () => openDrawer(ci, null, 't' + ci);
       const tCoin = h('button', { class: 'coin', 'aria-haspopup': 'dialog', 'aria-label': `Chapter ${ci + 1} trophy${info.complete ? ', won' : ''}`,
-        onclick: (e) => { e.stopPropagation(); openPop(tCoin, ci, null); } }, h('span', { 'aria-hidden': 'true' }, info.complete ? '🏆' : '🎁'));
+        onclick: (e) => { e.stopPropagation(); tOpen(); } }, h('span', { 'aria-hidden': 'true' }, info.complete ? '🏆' : '🎁'));
       nodes.push(h('div', { class: 'tr-node trophy ' + tState, style: at(tx, ty) }, tCoin));
-      nodes.push(tag(tx, ty, 52, tState, info.complete ? 'Trophy won' : 'Chapter trophy', info.complete ? '+60 XP earned' : tState === 'locked' ? 'Locked' : 'Finish all 3 · +60 XP', () => openPop(tCoin, ci, null)));
+      nodes.push(chip(tx, ty, 46, tState, info.complete ? 'Trophy won' : 'Chapter trophy', info.complete ? '+60 XP' : null, tOpen));
       if (ci === CHAPTERS.length - 1) nodes.push(h('p', { class: 'tr-end' }, 'More tour dates coming soon 🤘'));
       const sec = h('section', { class: 'tr-biome' + (info.open ? '' : ' locked') + (info.fresh ? ' fresh' : ''), 'data-ci': ci, style: chapterColor(ci),
         'aria-label': `Chapter ${ci + 1}: ${ch.title}. ${info.open ? `${info.done} of ${info.total} lessons done` : 'Locked'}`, html: TR.render(ci, avoid) }, nodes);
@@ -297,6 +297,7 @@
       return sec;
     });
 
+    // sticky chapter banner over the trail
     const banner = h('header', { class: 'tr-banner' });
     let shown = -1;
     function setBanner(ci) {
@@ -312,7 +313,52 @@
           h('strong', null, ch.title),
           h('div', { class: 'tr-dots', 'aria-label': `${info.done} of ${info.total} lessons done` }, ch.ids.map((id) => h('i', { class: st.lessons[id] ? 'on' : '' })))),
         h('div', { class: 'tr-score' }, h('span', { 'aria-label': `${stars} of ${L.LESSONS.length * 3} stars` }, `⭐ ${stars}`), h('span', { 'aria-label': `${trophies} of ${CHAPTERS.length} trophies` }, `🏆 ${trophies}`)));
+      tourRows.forEach((r, i) => r.classList.toggle('here', i === ci));
     }
+
+    // left rail: the 8-stop tour + your pad
+    const tourRows = CHAPTERS.map((ch, ci) => h('button', { class: 'tour-row' + (isl[ci].open ? '' : ' lock'), style: { '--c': TR.BIOMES[ci].ac },
+      onclick: () => secs[ci].scrollIntoView({ behavior: reduced ? 'auto' : 'smooth', block: 'start' }) },
+      h('i', { 'aria-hidden': 'true' }, ch.mark), h('span', null, h('b', null, ch.place), h('small', null, ch.title)),
+      h('em', null, isl[ci].complete ? '🏆' : isl[ci].open ? `${isl[ci].done}/3` : '🔒')));
+    const padSt = K.status, daw = K.daw(st.settings.daw), padOn = padSt.serial || padSt.midi.length;
+    const lrail = h('aside', { class: 'lrail', 'aria-label': 'The tour' },
+      h('section', { class: 'rcard' }, h('h5', null, 'The tour', h('span', null, `${trophies}/${CHAPTERS.length} 🏆`)), h('nav', { class: 'tour' }, tourRows)),
+      h('section', { class: 'rcard padcard' + (padOn ? ' on' : '') },
+        h('h5', null, 'Your pad'),
+        h('p', null, h('i', { class: 'dot' }), padOn ? (padSt.serial ? 'Handpad connected (serial)' : padSt.midi[0]) : 'Keyboard for now'),
+        h('small', null, `Binds follow ${daw.short || daw.name}`),
+        h('button', { class: 'ghost small', onclick: settings }, padOn ? 'Pad settings' : 'Connect your pad')));
+
+    // right rail: up next, streak, today's goal
+    const todayN = S.todayCount(), goal = 2, streak = S.streak();
+    const week = (() => {
+      const d = new Date(), dow = (d.getDay() + 6) % 7;
+      d.setDate(d.getDate() - dow);
+      return ['M', 'T', 'W', 'T', 'F', 'S', 'S'].map((lbl, i) => {
+        const x = new Date(d); x.setDate(d.getDate() + i);
+        const k = x.getFullYear() + '-' + String(x.getMonth() + 1).padStart(2, '0') + '-' + String(x.getDate()).padStart(2, '0');
+        return h('span', { class: (st.days.includes(k) ? 'on' : '') + (i === dow ? ' today' : '') }, h('i', null, st.days.includes(k) ? '✓' : ''), lbl);
+      });
+    })();
+    const upCard = next
+      ? h('section', { class: 'rcard up', style: chapterColor(curCi) },
+        h('h5', null, 'Up next', h('span', null, `${next.ex.length} steps`)),
+        h('div', { class: 'up-row' }, h('span', { class: 'up-ic' }, next.icon), h('div', null, h('strong', null, next.title), h('p', null, next.blurb))),
+        h('div', { class: 'up-acts' },
+          h('button', { class: 'btn', onclick: () => { A.unlock(); lesson(next, 0); } }, 'Start lesson', h('kbd', null, '↵')),
+          h('button', { class: 'ghost small', onclick: (e) => { e.stopPropagation(); openDrawer(curCi, next, 'l' + next.id); } }, 'Details')))
+      : h('section', { class: 'rcard up' }, h('h5', null, 'Tour complete'), h('p', null, 'Every lesson done. Replay any stop for 3 stars.'));
+    const rrail = h('aside', { class: 'rrail', 'aria-label': 'Your progress' },
+      upCard,
+      h('section', { class: 'rcard' }, h('h5', null, 'Streak', h('span', null, `🔥 ${streak} day${streak === 1 ? '' : 's'}`)), h('div', { class: 'week' }, week)),
+      h('section', { class: 'rcard goal' }, h('span', { class: 'ring', style: { '--p': Math.min(1, todayN / goal) } }, h('b', null, `${Math.min(todayN, goal)}/${goal}`)),
+        h('div', null, h('strong', null, 'Today’s goal'), h('p', null, todayN >= goal ? 'Done for today. Nice drumming!' : todayN ? 'One more lesson to hit your goal' : `${goal} lessons a day. One keeps the streak.`))));
+
+    // on smaller windows the right rail folds into this floating bar
+    const upbar = next ? h('div', { class: 'upbar' }, h('span', { class: 'up-ic' }, next.icon), h('div', null, h('small', null, 'Up next'), h('strong', null, next.title)),
+      h('button', { class: 'btn', onclick: () => { A.unlock(); lesson(next, 0); } }, 'Start', h('kbd', null, '↵'))) : null;
+
     const jump = h('button', { class: 'tr-jump hide', 'aria-label': 'Jump to your next lesson', html: '<svg viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>',
       onclick: (e) => { e.stopPropagation(); if (curNode) curNode.scrollIntoView({ behavior: reduced ? 'auto' : 'smooth', block: 'center' }); } });
     function onScroll() {
@@ -327,12 +373,16 @@
       }
     }
     setBanner(0);
-    show(h('main', { class: 'lessons' }, topbar(), banner, h('div', { class: 'trail' }, secs), jump), 'learn');
+    show(h('main', { class: 'lessons' }, topbar(),
+      h('div', { class: 'learn-grid' }, lrail, h('div', { class: 'trail-col' }, banner, h('div', { class: 'trail' }, secs)), rrail)), 'learn', true);
+    // fixed elements live on <body>: the screen's entry animation would otherwise pin them to the screen
+    if (upbar) document.body.appendChild(upbar);
+    document.body.appendChild(jump);
 
     addEventListener('scroll', onScroll, { passive: true });
-    const outside = (e) => { if (!pop.contains(e.target)) closePop(); };
+    const outside = (e) => { if (drawerEl && !drawerEl.contains(e.target)) closeDrawer(); };
     document.addEventListener('click', outside);
-    disposers.push(() => { removeEventListener('scroll', onScroll); document.removeEventListener('click', outside); });
+    disposers.push(() => { removeEventListener('scroll', onScroll); document.removeEventListener('click', outside); drawerEl = null; drawerFor = null; });
 
     if (freshSec) {
       const ci = +freshSec.dataset.ci;
@@ -342,7 +392,11 @@
     const focus = freshSec ? freshSec.querySelector('.tr-node') : curNode;
     if (focus) focus.scrollIntoView({ block: 'center' });
     onScroll();
-    onKey = (e) => { if (e.key === 'Escape' && pop.classList.contains('on')) closePop(); };
+    onKey = (e) => {
+      if (onButton(e)) return;
+      if (e.key === 'Escape' && drawerEl) closeDrawer();
+      else if (e.key === 'Enter' && next && !drawerEl) { A.unlock(); lesson(next, 0); }
+    };
   }
 
   // =====================================================================

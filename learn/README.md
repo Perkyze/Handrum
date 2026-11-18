@@ -15,8 +15,15 @@ Double-clicking `index.html` also works for keyboard play.
 
 ## How it works
 
-Three tabs along the bottom: **Learn** (the trail), **Jam** (free play with a metronome and a hit monitor)
-and **Settings**.
+Three tabs in a floating glass dock at the bottom: **Learn** (the trail), **Jam** (free play with a metronome
+and a hit monitor) and **Settings**. Built desktop-first, still responsive:
+
+- **Learn on a PC** uses the "Studio rails" layout picked in `design/style-picker.html`: the 8-stop tour and
+  your pad status on the left, the scenic trail in the middle (chunky coins with name chips), and Up next,
+  streak and today's goal on the right. Clicking a coin slides in a drawer with the lesson's steps.
+- **Under 1024 px** the rails fold away and "Up next" floats above the dock; **on phones** the drawer becomes a
+  bottom sheet.
+- Buttons are glass pills.
 
 - **Learn**: a drum tour through eight places (garage, backyard party, street corner, beach bonfire,
   jungle camp, desert highway, mountain lodge, festival stage). Each chapter holds three lessons and a trophy;
