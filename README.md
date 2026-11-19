@@ -45,6 +45,7 @@ web/                    the app (plain HTML/JS, no build step)
   index.html
   style.css
   app.js
+learn/                  Backbeat: a game that teaches drums from zero (see learn/README.md)
 firmware/drum_pads/
   drum_pads.ino         Arduino sketch for the pads
 ```
