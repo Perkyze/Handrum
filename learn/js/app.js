@@ -24,7 +24,7 @@
     disposers = []; onKey = null;
     K.cancelLearn();
     A.stop();
-    document.querySelectorAll('.confetti, .toast, .dock, .drawer, .upbar, .tr-jump, .tr-arrive').forEach((n) => n.remove());
+    document.querySelectorAll('.confetti, .toast, .dock, .upbar, .tr-jump, .tr-arrive').forEach((n) => n.remove());
     app.textContent = '';
     app.classList.toggle('wide', !!wide);
     node.classList.add('screen');
@@ -193,51 +193,65 @@
   const STEP_ICON = { find: '🎯', ear: '👂', play: '🎮' };
   const stepMeta = (e) => e.t === 'play' ? `${e.bpm} BPM${e.echo ? ' · echo' : ''}` : e.t === 'find' ? 'no timer' : 'listen';
 
-  // ---------- the slide-in lesson drawer ----------
-  let drawerEl = null, drawerFor = null;
-  function closeDrawer() {
-    if (!drawerEl) return;
-    const d = drawerEl;
-    d.classList.remove('on');
-    setTimeout(() => d.remove(), 240);
-    drawerEl = null; drawerFor = null;
+  // ---------- the card that drops down under a tapped stop (like Tonic's) ----------
+  let popEl = null, popFor = null;
+  function closePop() {
+    if (!popEl) return;
+    const p = popEl;
+    p.classList.remove('on');
+    setTimeout(() => p.remove(), 180);
+    popEl = null; popFor = null;
   }
-  function openDrawer(ci, les, key) {
-    if (drawerFor === key) return closeDrawer();
-    closeDrawer();
-    const st = S.load(), isl = S.chapters();
-    const ch = CHAPTERS[ci], info = isl[ci];
-    let body;
+  const popGo = (label, fn) => h('button', { class: 'go', disabled: fn ? null : true, onclick: fn ? () => { A.unlock(); fn(); } : null }, label);
+  // the steps of a lesson, as a list (Up next's "More info")
+  const stepList = (les) => h('ol', { class: 'step-list' }, les.ex.map((e) => h('li', null, h('span', null, STEP_ICON[e.t]), e.title, h('em', null, stepMeta(e)))));
+  function openPop(ci, les, key, node) {
+    if (popFor === key) return closePop();
+    closePop();
+    const st = S.load(), info = S.chapters()[ci], ch = CHAPTERS[ci];
+    const sec = node.closest('.tr-biome');
+    let body, plain = false;
     if (!les) {
+      plain = true;
       const todo = ch.ids.map((id) => L.byId(id)).find((l) => !st.lessons[l.id]);
-      body = [h('div', { class: 'dw-head' }, h('span', { class: 'dw-ic' }, info.complete ? '🏆' : '🎁'),
-          h('div', null, h('span', { class: 'eyebrow' }, `Chapter ${ci + 1} · ${ch.place}`), h('h3', null, info.complete ? 'Trophy won!' : 'Chapter trophy'))),
-        h('p', { class: 'dw-blurb' }, info.complete ? `You finished “${ch.title}” and earned 60 XP.` : `Finish the three lessons of “${ch.title}” to win it, plus 60 XP.`),
-        h('ol', { class: 'dw-steps' }, ch.ids.map((id) => { const l = L.byId(id), r = st.lessons[id]; return h('li', { class: r ? 'done' : '' }, h('span', null, l.icon), l.title, h('em', null, r ? '★'.repeat(r.stars) : 'to do')); })),
-        h('div', { class: 'dw-acts' }, info.complete ? h('button', { class: 'btn', onclick: () => lesson(L.byId(ch.ids[0]), 0) }, 'Replay the chapter')
-          : info.open && todo ? h('button', { class: 'btn', onclick: () => { A.unlock(); lesson(todo, 0); } }, `Next: ${todo.title}`, h('kbd', null, '↵'))
-            : h('button', { class: 'btn', disabled: true }, '🔒 Locked'))];
+      body = [h('span', { class: 'ic', 'aria-hidden': 'true' }, info.complete ? '🏆' : '🎁'),
+        h('span', { class: 'eyebrow' }, `Chapter ${ci + 1} · ${ch.place}`),
+        h('h3', null, info.complete ? 'Trophy won!' : 'Chapter trophy'),
+        h('p', null, info.complete ? `You finished “${ch.title}”.` : 'Finish the three lessons to win it, plus 60 XP.'),
+        h('ul', { class: 'pop-list' }, ch.ids.map((id) => { const l = L.byId(id), r = st.lessons[id];
+          return h('li', { class: r ? 'done' : '' }, h('span', { 'aria-hidden': 'true' }, l.icon), l.title, r ? starRow(r.stars) : h('em', null, 'to do')); })),
+        info.complete ? popGo('Replay the chapter', () => lesson(L.byId(ch.ids[0]), 0))
+          : info.open && todo ? popGo(`Next: ${todo.title}`, () => lesson(todo, 0)) : popGo('🔒 Locked', null)];
     } else {
       const rec = st.lessons[les.id], n = L.LESSONS.indexOf(les) + 1;
+      const bpms = les.ex.filter((e) => e.t === 'play').map((e) => e.bpm);
       const hear = les.cards.find((c) => c.a);
-      body = [h('div', { class: 'dw-head' }, h('span', { class: 'dw-ic' }, les.icon),
-          h('div', null, h('span', { class: 'eyebrow' }, `Lesson ${n} · ${ch.place}`), h('h3', null, les.title))),
-        h('p', { class: 'dw-blurb' }, les.blurb + '.'),
-        rec ? h('div', { class: 'dw-rec' }, starRow(starsOf(rec)), `Best ${rec.best}% · played ${rec.plays}×`) : null,
-        h('p', { class: 'eyebrow' }, `What you’ll do · ${les.ex.length} steps`),
-        h('ol', { class: 'dw-steps' }, les.ex.map((e) => h('li', null, h('span', null, STEP_ICON[e.t]), e.title, h('em', null, stepMeta(e))))),
-        h('div', { class: 'dw-acts' },
-          !info.open ? h('button', { class: 'btn', disabled: true }, `🔒 Finish chapter ${ci} first`)
-            : h('button', { class: 'btn', onclick: () => { A.unlock(); lesson(les, 0); } }, rec ? 'Play again' : 'Start lesson', h('kbd', null, '↵')),
-          hear && info.open ? h('button', { class: 'ghost', onclick: () => demo(hear.a, document.body) }, speaker(), 'Hear it') : null)];
+      plain = !info.open;
+      body = [h('span', { class: 'ic', 'aria-hidden': 'true' }, les.icon),
+        h('span', { class: 'eyebrow' }, `Lesson ${n} · ${ch.place}`),
+        h('h3', null, les.title),
+        h('div', { class: 'row' }, `${les.ex.length} steps · ${bpms.length ? `up to ${Math.max(...bpms)} BPM` : 'no timer'}`),
+        rec ? h('div', { class: 'row best' }, starRow(starsOf(rec)), `Best ${rec.best}%`) : null,
+        h('div', { class: 'pop-acts' },
+          !info.open ? popGo(`🔒 Finish chapter ${ci} first`, null)
+            : popGo(rec ? `Play again +${20} XP` : `Start +${40} XP`, () => lesson(les, 0)),
+          hear && info.open ? h('button', { class: 'pop-hear', 'aria-label': 'Hear it', title: 'Hear it', onclick: () => demo(hear.a, document.body) }, speaker()) : null)];
     }
-    const el = h('aside', { class: 'drawer', role: 'dialog', 'aria-label': les ? les.title : `Chapter ${ci + 1} trophy`, style: chapterColor(ci) },
-      h('button', { class: 'x dw-x', onclick: closeDrawer, 'aria-label': 'Close' }, '✕'), body);
-    document.body.appendChild(el);
+    const el = h('div', { class: 'tr-pop' + (plain ? ' plain' : ''), role: 'dialog', 'aria-label': les ? les.title : `Chapter ${ci + 1} trophy`, style: chapterColor(ci) }, body);
+    sec.appendChild(el);
+    // under the coin, kept inside the trail; the little arrow still points at the coin
+    const sr = sec.getBoundingClientRect(), nr = node.querySelector('.coin').getBoundingClientRect();
+    const w = el.offsetWidth, x = nr.left + nr.width / 2 - sr.left;
+    const cx = clamp(x, w / 2 + 12, sr.width - w / 2 - 12);
+    el.style.left = cx + 'px';
+    el.style.top = (nr.bottom - sr.top + 18) + 'px';
+    el.style.setProperty('--ax', (x - cx + w / 2) + 'px');
     void el.offsetWidth;
     el.classList.add('on');
-    drawerEl = el; drawerFor = key;
-    const go = el.querySelector('.btn:not(:disabled)');
+    popEl = el; popFor = key;
+    const r = el.getBoundingClientRect();
+    if (r.bottom > innerHeight - 96) scrollBy({ top: r.bottom - innerHeight + 110, behavior: reduced ? 'auto' : 'smooth' });
+    const go = el.querySelector('.go:not(:disabled)');
     if (go) go.focus({ preventScroll: true });
   }
 
@@ -266,7 +280,7 @@
         const les = L.byId(id), rec = st.lessons[id], n = L.LESSONS.indexOf(les) + 1;
         const state = !info.open ? 'locked' : rec ? 'done' : les === next ? 'current' : 'open';
         const [x, y] = stops[li];
-        const open = () => openDrawer(ci, les, 'l' + id);
+        const open = () => openPop(ci, les, 'l' + id, node);
         const coin = h('button', { class: 'coin', 'aria-haspopup': 'dialog',
           'aria-label': `Lesson ${n}: ${les.title}${rec ? `, completed, ${starsOf(rec)} of 3 stars` : state === 'current' ? ', up next' : state === 'locked' ? ', locked' : ''}`,
           onclick: (e) => { e.stopPropagation(); open(); } },
@@ -285,10 +299,11 @@
       });
       const [tx, ty] = stops[3];
       const tState = info.complete ? 'done' : info.open ? 'todo' : 'locked';
-      const tOpen = () => openDrawer(ci, null, 't' + ci);
+      const tOpen = () => openPop(ci, null, 't' + ci, tNode);
       const tCoin = h('button', { class: 'coin', 'aria-haspopup': 'dialog', 'aria-label': `Chapter ${ci + 1} trophy${info.complete ? ', won' : ''}`,
         onclick: (e) => { e.stopPropagation(); tOpen(); } }, h('span', { 'aria-hidden': 'true' }, info.complete ? '🏆' : '🎁'));
-      nodes.push(h('div', { class: 'tr-node trophy ' + tState, style: at(tx, ty) }, tCoin));
+      const tNode = h('div', { class: 'tr-node trophy ' + tState, style: at(tx, ty) }, tCoin);
+      nodes.push(tNode);
       nodes.push(chip(tx, ty, 46, tState, info.complete ? 'Trophy won' : 'Chapter trophy', info.complete ? '+60 XP' : null, tOpen));
       if (ci === CHAPTERS.length - 1) nodes.push(h('p', { class: 'tr-end' }, 'More tour dates coming soon 🤘'));
       const sec = h('section', { class: 'tr-biome' + (info.open ? '' : ' locked') + (info.fresh ? ' fresh' : ''), 'data-ci': ci, style: chapterColor(ci),
@@ -341,13 +356,24 @@
         return h('span', { class: (st.days.includes(k) ? 'on' : '') + (i === dow ? ' today' : '') }, h('i', null, st.days.includes(k) ? '✓' : ''), lbl);
       });
     })();
+    // "More info" folds the lesson's steps open right inside the card
+    let upMore = null;
+    if (next) {
+      const drop = h('div', { class: 'up-drop', id: 'up-steps' }, h('div', null, h('p', { class: 'eyebrow' }, 'What you’ll do'), stepList(next)));
+      const btn = h('button', { class: 'ghost small up-more', 'aria-expanded': 'false', 'aria-controls': 'up-steps', onclick: () => {
+        const open = !drop.classList.contains('open');
+        drop.classList.toggle('open', open);
+        btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+      } }, 'More info', h('span', { class: 'chev', 'aria-hidden': 'true', html: '<svg viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>' }));
+      upMore = [btn, drop];
+    }
     const upCard = next
       ? h('section', { class: 'rcard up', style: chapterColor(curCi) },
         h('h5', null, 'Up next', h('span', null, `${next.ex.length} steps`)),
         h('div', { class: 'up-row' }, h('span', { class: 'up-ic' }, next.icon), h('div', null, h('strong', null, next.title), h('p', null, next.blurb))),
         h('div', { class: 'up-acts' },
-          h('button', { class: 'btn', onclick: () => { A.unlock(); lesson(next, 0); } }, 'Start lesson', h('kbd', null, '↵')),
-          h('button', { class: 'ghost small', onclick: (e) => { e.stopPropagation(); openDrawer(curCi, next, 'l' + next.id); } }, 'Details')))
+          h('button', { class: 'btn', onclick: () => { A.unlock(); lesson(next, 0); } }, 'Start lesson', h('kbd', null, '↵'))),
+        upMore)
       : h('section', { class: 'rcard up' }, h('h5', null, 'Tour complete'), h('p', null, 'Every lesson done. Replay any stop for 3 stars.'));
     const rrail = h('aside', { class: 'rrail', 'aria-label': 'Your progress' },
       upCard,
@@ -369,7 +395,7 @@
       if (curNode) {
         const r = curNode.getBoundingClientRect();
         jump.classList.toggle('hide', !(r.bottom < 110 || r.top > innerHeight - 110));
-        jump.classList.toggle('up', r.bottom < 110);
+        jump.classList.toggle('is-up', r.bottom < 110);   // not 'up': that class styles the Up next card
       }
     }
     setBanner(0);
@@ -380,9 +406,10 @@
     document.body.appendChild(jump);
 
     addEventListener('scroll', onScroll, { passive: true });
-    const outside = (e) => { if (drawerEl && !drawerEl.contains(e.target)) closeDrawer(); };
+    const outside = (e) => { if (popEl && !popEl.contains(e.target)) closePop(); };
     document.addEventListener('click', outside);
-    disposers.push(() => { removeEventListener('scroll', onScroll); document.removeEventListener('click', outside); drawerEl = null; drawerFor = null; });
+    addEventListener('resize', closePop);   // it's placed in pixels under its coin
+    disposers.push(() => { removeEventListener('scroll', onScroll); removeEventListener('resize', closePop); document.removeEventListener('click', outside); popEl = null; popFor = null; });
 
     // just finished a chapter: travel from its trophy to the new place instead of landing there
     const freshCi = freshSec ? +freshSec.dataset.ci : -1;
@@ -404,8 +431,8 @@
       if (cine && cine.running()) { e.preventDefault(); cine.skip(); return; }
       if (cine && cine.waiting() && e.key === 'Enter') { e.preventDefault(); cine.go(); return; }
       if (onButton(e)) return;
-      if (e.key === 'Escape' && drawerEl) closeDrawer();
-      else if (e.key === 'Enter' && next && !drawerEl) { A.unlock(); lesson(next, 0); }
+      if (e.key === 'Escape' && popEl) closePop();
+      else if (e.key === 'Enter' && next && !popEl) { A.unlock(); lesson(next, 0); }
     };
   }
 
@@ -446,7 +473,7 @@
       coin.setAttribute('aria-label', `Trophy won. Travel to chapter ${ci + 1}, ${ch.place}`);
       coin.focus({ preventScroll: true });
     });
-    // clicking the trophy (or a trigger) starts the trip instead of opening the drawer
+    // clicking the trophy (or a trigger) starts the trip instead of opening its pop-up
     const intercept = (e) => { if (state !== 'waiting') return; e.preventDefault(); e.stopPropagation(); go(); };
     const hosts = [trophy].concat(triggers).filter(Boolean);
     hosts.forEach((n) => n.addEventListener('click', intercept, true));
@@ -530,7 +557,7 @@
     function skip(e) {
       if (state !== 'travel') return;
       if (e && e.type === 'pointerdown') {
-        // the tap only skips: swallow the click it turns into so it doesn't also open a drawer
+        // the tap only skips: swallow the click it turns into so it doesn't also open a pop-up
         e.preventDefault(); e.stopPropagation();
         const eat = (c) => { c.preventDefault(); c.stopPropagation(); };
         addEventListener('click', eat, { capture: true, once: true });

@@ -172,7 +172,7 @@ label.srow { grid-template-columns: 110px 1fr; }
 
 /* =====================================================================
    Desktop redesign (picked in the style picker): Studio rails layout,
-   floating dock, chunky coins with chips, slide-in drawer, glass pills.
+   floating dock, chunky coins with chips, drop-down stop cards, glass pills.
    ===================================================================== */
 
 /* glass pill buttons */
@@ -249,27 +249,32 @@ label.srow { grid-template-columns: 110px 1fr; }
 .tr-chip.locked { background: rgba(21, 18, 43, .62); color: rgba(255, 255, 255, .8); }
 .tr-chip.locked b::before { content: '🔒 '; font-size: 10px; }
 
-/* the slide-in lesson drawer */
-.drawer { position: fixed; z-index: 30; top: calc(16px + env(safe-area-inset-top, 0px)); bottom: 16px; right: max(16px, env(safe-area-inset-right, 0px)); width: min(400px, calc(100vw - 32px));
-  display: flex; flex-direction: column; gap: 14px; padding: 24px 22px 22px; border-radius: 28px; overflow: auto;
-  background: rgba(30, 25, 62, .8); border: 1px solid rgba(255, 255, 255, .2); box-shadow: inset 0 1px 0 rgba(255, 255, 255, .12), 0 30px 80px rgba(0, 0, 0, .55);
-  -webkit-backdrop-filter: blur(22px) saturate(1.3); backdrop-filter: blur(22px) saturate(1.3);
-  transform: translateX(calc(100% + 32px)); transition: transform .24s cubic-bezier(.2, .9, .3, 1); }
-.drawer.on { transform: none; }
-.dw-x { position: absolute; top: 14px; right: 14px; border-radius: 999px; background: rgba(255, 255, 255, .08); }
-.dw-head { display: flex; gap: 14px; align-items: center; padding-right: 40px; }
-.dw-ic { width: 66px; height: 66px; flex: none; border-radius: 21px; display: grid; place-items: center; font-size: 33px; background: var(--ac); box-shadow: 0 5px 0 var(--acd); }
-.dw-head h3 { font-size: 28px; margin-top: 2px; }
-.dw-blurb { color: #e6e0ff; font-size: 15.5px; }
-.dw-rec { display: flex; gap: 8px; align-items: center; font-size: 14px; color: var(--mute); }
-.dw-rec .stars { font-size: 16px; }
-.dw-steps { list-style: none; margin: -4px 0 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
-.dw-steps li { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 14px; background: rgba(255, 255, 255, .06); border: 1px solid rgba(255, 255, 255, .08); font-weight: 700; font-size: 14.5px; }
-.dw-steps em { margin-left: auto; font-style: normal; font-weight: 500; font-size: 12.5px; color: var(--mute); white-space: nowrap; }
-.dw-steps li.done em { color: var(--yellow); }
-.dw-acts { margin-top: auto; display: flex; gap: 10px; flex-wrap: wrap; padding-top: 6px; }
-.dw-acts .btn { flex: 1 1 180px; }
+/* the pop-up under a tapped stop (base styles in styles.css) */
+.tr-pop .go { text-transform: uppercase; letter-spacing: .04em; }
+.tr-pop .row.best { gap: 6px; margin-top: -8px; }
+.pop-acts { display: flex; gap: 8px; }
+.pop-acts .go { flex: 1; }
+.pop-hear { flex: none; width: 54px; border-radius: 14px; display: grid; place-items: center; background: rgba(255, 255, 255, .2); color: #fff; box-shadow: 0 5px 0 rgba(0, 0, 0, .15); }
+.pop-hear:hover { background: rgba(255, 255, 255, .3); }
+.pop-hear:active { transform: translateY(4px); box-shadow: 0 1px 0 rgba(0, 0, 0, .15); }
+.pop-hear .ico { width: 22px; height: 22px; }
+.pop-list { list-style: none; margin: 0 0 14px; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.pop-list li { display: flex; align-items: center; gap: 8px; font: 700 14px var(--body); }
+.pop-list li em, .pop-list li .stars { margin-left: auto; font-style: normal; font-weight: 500; font-size: 12.5px; color: #8a84a8; }
+.pop-list li .stars { font-size: 14px; }
 
+/* a lesson's steps (Up next → More info) */
+.step-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.step-list li { display: flex; align-items: center; gap: 9px; padding: 8px 10px; border-radius: 12px; background: rgba(255, 255, 255, .06); border: 1px solid rgba(255, 255, 255, .08); font-weight: 700; font-size: 13.5px; }
+.step-list em { margin-left: auto; font-style: normal; font-weight: 500; font-size: 12px; color: var(--mute); white-space: nowrap; }
+.up-more { display: flex; align-items: center; justify-content: center; gap: 4px; width: 100%; white-space: nowrap; }
+.up-more .chev { width: 16px; height: 16px; display: grid; transition: transform .2s; }
+.up-more .chev svg { width: 100%; height: 100%; fill: none; stroke: currentColor; stroke-width: 2.6; stroke-linecap: round; stroke-linejoin: round; }
+.up-more[aria-expanded="true"] .chev { transform: rotate(180deg); }
+.up-drop { display: grid; grid-template-rows: 0fr; margin-top: -10px; transition: grid-template-rows .25s ease, margin-top .25s ease; }
+.up-drop.open { grid-template-rows: 1fr; margin-top: 0; }
+.up-drop > div { overflow: hidden; min-height: 0; display: flex; flex-direction: column; gap: 8px; }
+.up-drop .eyebrow { margin: 0; font-size: 11px; }
 /* smaller windows: the rails fold away, "Up next" floats above the dock */
 @media (max-width: 1023px) {
   .learn-grid { grid-template-columns: minmax(0, 600px); }
@@ -287,8 +292,6 @@ label.srow { grid-template-columns: 110px 1fr; }
 }
 @media (max-width: 640px) {
   .trail-col .trail { width: calc(100% + 32px); margin-left: -16px; border-radius: 0; }
-  .drawer { top: auto; left: 8px; right: 8px; bottom: 8px; width: auto; max-height: 82vh; transform: translateY(calc(100% + 24px)); }
-  .drawer.on { transform: none; }
   .tr-chip { font-size: 12px; padding: 4px 10px 5px; }
   .tr-start { display: none; }
 }
