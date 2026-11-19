@@ -359,5 +359,8 @@
       (b.seam ? '<div class="tr-seam" aria-hidden="true">' + seam(b.seam, ci) + '</div>' : '');
   }
 
-  window.Trail = { W, H, BIOMES, render, mascot, shade, stops: (ci) => BIOMES[ci].stops };
+  // the tour van on its own, for the zone-to-zone travel card
+  const vanSvg = (c) => '<svg viewBox="-36 -34 72 36" aria-hidden="true">' + van(0, 0, 1, c) + '</svg>';
+
+  window.Trail = { W, H, BIOMES, render, mascot, shade, van: vanSvg, stops: (ci) => BIOMES[ci].stops };
 })();

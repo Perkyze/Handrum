@@ -24,7 +24,7 @@
     disposers = []; onKey = null;
     K.cancelLearn();
     A.stop();
-    document.querySelectorAll('.confetti, .toast, .dock, .drawer, .upbar, .tr-jump').forEach((n) => n.remove());
+    document.querySelectorAll('.confetti, .toast, .dock, .drawer, .upbar, .tr-jump, .tr-arrive').forEach((n) => n.remove());
     app.textContent = '';
     app.classList.toggle('wide', !!wide);
     node.classList.add('screen');
@@ -384,19 +384,164 @@
     document.addEventListener('click', outside);
     disposers.push(() => { removeEventListener('scroll', onScroll); document.removeEventListener('click', outside); drawerEl = null; drawerFor = null; });
 
-    if (freshSec) {
-      const ci = +freshSec.dataset.ci;
-      later(() => toast(`${CHAPTERS[ci].mark} Chapter ${ci + 1} · ${CHAPTERS[ci].place} is open!`), reduced ? 0 : 500);
+    // just finished a chapter: travel from its trophy to the new place instead of landing there
+    const freshCi = freshSec ? +freshSec.dataset.ci : -1;
+    const travel = freshSec && !reduced && freshCi > 0 && isl[freshCi - 1].complete;
+    let cine = null;
+    if (freshSec && !travel) {
+      later(() => toast(`${CHAPTERS[freshCi].mark} Chapter ${freshCi + 1} · ${CHAPTERS[freshCi].place} is open!`), reduced ? 0 : 500);
       S.markSeen();
     }
-    const focus = freshSec ? freshSec.querySelector('.tr-node') : curNode;
-    if (focus) focus.scrollIntoView({ block: 'center' });
+    // the new place only counts as seen once you've travelled there, so leaving early keeps the trip waiting
+    if (travel) cine = zoneTravel(secs[freshCi - 1], freshSec, freshCi,
+      [secs[freshCi - 1].querySelector('.tr-node.trophy + .tr-chip'), tourRows[freshCi], jump], () => S.markSeen());
+    else {
+      const focus = freshSec ? freshSec.querySelector('.tr-node') : curNode;
+      if (focus) focus.scrollIntoView({ block: 'center' });
+    }
     onScroll();
     onKey = (e) => {
+      if (cine && cine.running()) { e.preventDefault(); cine.skip(); return; }
+      if (cine && cine.waiting() && e.key === 'Enter') { e.preventDefault(); cine.go(); return; }
       if (onButton(e)) return;
       if (e.key === 'Escape' && drawerEl) closeDrawer();
       else if (e.key === 'Enter' && next && !drawerEl) { A.unlock(); lesson(next, 0); }
     };
+  }
+
+  // ---------- zone-to-zone travel ----------
+  // Back on the trail after winning a trophy: the trophy celebrates and waits with a "Next stop" bubble.
+  // Click it (or press Enter) and the camera pans down through the cloud seam, a "Next stop" tour card
+  // drives by, then the new place colours in and its stops pop up. Any key, click or scroll skips the trip.
+  // triggers: other elements that also start the trip (the trophy chip first, then the tour row and the jump button).
+  function zoneTravel(fromSec, toSec, ci, triggers, onDone) {
+    const ch = CHAPTERS[ci], col = chapterColor(ci);
+    const trophy = fromSec.querySelector('.tr-node.trophy');
+    const land = toSec.querySelector('.tr-node');
+    const pieces = [...toSec.querySelectorAll('.tr-node, .tr-chip, .tr-buddy, .tr-end')];
+    const tourRow = triggers.find((t) => t && t.classList.contains('tour-row'));
+    const timers = [];
+    let state = 'waiting', raf = 0, card = null, bubble = null;
+    const at = (ms, fn) => timers.push(setTimeout(fn, ms));
+    const ease = (k) => (k < 0.5 ? 4 * k * k * k : 1 - Math.pow(-2 * k + 2, 3) / 2);
+    const landY = () => land.getBoundingClientRect().top + scrollY + land.offsetHeight / 2 - innerHeight / 2;
+
+    toSec.classList.remove('fresh');
+    toSec.classList.add('arriving');
+    trophy.scrollIntoView({ block: 'center' });
+
+    // 1 · the trophy you just won bounces and bursts, then waits for a click
+    at(250, () => {
+      trophy.classList.add('cele');
+      trophy.appendChild(h('span', { class: 'ta-burst', 'aria-hidden': 'true' }, [...Array(12)].map((_, i) => h('i', { style: { '--a': i * 30 + 'deg' } }))));
+      trophy.appendChild(h('span', { class: 'ta-xp', 'aria-hidden': 'true' }, '+60 XP'));
+      A.sfx('good');
+    });
+    // the trophy's own label turns into the call to action (a bubble above would cover the last lesson's label)
+    const chip = triggers[0], chipWas = chip ? [...chip.childNodes] : [];
+    at(1500, () => {
+      trophy.classList.add('ready');
+      if (chip) { chip.classList.add('ta-go'); chip.replaceChildren(h('b', null, 'Next stop'), h('span', { class: 'ta-arrow' }, '→')); bubble = chip; }
+      const coin = trophy.querySelector('.coin');
+      coin.setAttribute('aria-label', `Trophy won. Travel to chapter ${ci + 1}, ${ch.place}`);
+      coin.focus({ preventScroll: true });
+    });
+    // clicking the trophy (or a trigger) starts the trip instead of opening the drawer
+    const intercept = (e) => { if (state !== 'waiting') return; e.preventDefault(); e.stopPropagation(); go(); };
+    const hosts = [trophy].concat(triggers).filter(Boolean);
+    hosts.forEach((n) => n.addEventListener('click', intercept, true));
+
+    function go() {
+      if (state !== 'waiting') return;
+      state = 'travel';
+      A.unlock();
+      timers.forEach(clearTimeout); timers.length = 0;
+      hosts.forEach((n) => n.removeEventListener('click', intercept, true));
+      document.body.classList.add('cine');
+      trophy.classList.remove('ready');
+      if (bubble) { bubble.classList.remove('ta-go'); bubble.replaceChildren(...chipWas); }
+      // 2 · the camera rolls down the trail, through the clouds, into the next place.
+      // Driven by the clock, not by frames: requestAnimationFrame stalls in hidden or unfocused windows,
+      // so a timer ticks it too and a last snap makes sure the camera always lands.
+      const y0 = scrollY, t0 = performance.now(), ms = 1800;
+      const step = () => {
+        if (state !== 'travel') return false;
+        const k = Math.min(1, (performance.now() - t0) / ms);
+        scrollTo(0, y0 + (landY() - y0) * ease(k));
+        return k < 1;
+      };
+      const frame = () => { if (step()) raf = requestAnimationFrame(frame); };
+      raf = requestAnimationFrame(frame);
+      const tick = setInterval(() => { if (!step()) clearInterval(tick); }, 16);
+      timers.push(tick);
+      at(ms + 30, () => { clearInterval(tick); scrollTo(0, landY()); });
+      // 3 · the "Next stop" tour card drives in
+      at(ms - 250, () => {
+        card = h('div', { class: 'tr-arrive', role: 'status', style: col },
+          h('div', { class: 'ta-card' },
+            h('span', { class: 'ta-eye' }, 'Next stop'),
+            h('span', { class: 'ta-mark', 'aria-hidden': 'true' }, ch.mark),
+            h('strong', null, ch.place),
+            h('small', null, `Chapter ${ci + 1} · ${ch.title}`),
+            h('div', { class: 'ta-road', 'aria-hidden': 'true' }, h('span', { class: 'ta-van', html: TR.van(TR.BIOMES[ci].ac) }))));
+        document.body.appendChild(card);
+        A.sfx('win');
+      });
+      // 4 · the card flies off, the new place colours in and its stops pop up one by one
+      at(ms + 1350, () => { scrollTo(0, landY()); if (card) card.classList.add('out'); arrive(); });
+      at(ms + 2650, finish);
+      // listen for skips only after this click has finished bubbling
+      setTimeout(() => {
+        if (state !== 'travel') return;
+        addEventListener('wheel', skip, { capture: true, passive: true });
+        addEventListener('touchstart', skip, { capture: true, passive: true });
+        addEventListener('pointerdown', skip, true);
+      }, 0);
+    }
+    function arrive() {
+      if (!toSec.classList.contains('arriving')) return;
+      toSec.classList.remove('arriving');
+      toSec.classList.add('arrived');
+      pieces.forEach((p, i) => { p.style.animationDelay = (0.15 + i * 0.07).toFixed(2) + 's'; });
+      if (tourRow) tourRow.classList.add('arrive');
+    }
+    function unlisten() {
+      timers.forEach((t) => { clearTimeout(t); clearInterval(t); });
+      cancelAnimationFrame(raf);
+      hosts.forEach((n) => n.removeEventListener('click', intercept, true));
+      removeEventListener('wheel', skip, true);
+      removeEventListener('touchstart', skip, true);
+      removeEventListener('pointerdown', skip, true);
+      document.body.classList.remove('cine');
+    }
+    function finish() {
+      if (state === 'done') return;
+      state = 'done';
+      unlisten();
+      if (card) { const c = card; c.classList.add('out'); setTimeout(() => c.remove(), 400); }
+      trophy.classList.remove('cele', 'ready');
+      trophy.querySelectorAll('.ta-burst, .ta-xp').forEach((n) => n.remove());
+      if (bubble && bubble.classList.contains('ta-go')) { bubble.classList.remove('ta-go'); bubble.replaceChildren(...chipWas); }
+      arrive();
+      const coin = land.querySelector('.coin');
+      if (coin) coin.focus({ preventScroll: true });
+      if (onDone) onDone();
+    }
+    function skip(e) {
+      if (state !== 'travel') return;
+      if (e && e.type === 'pointerdown') {
+        // the tap only skips: swallow the click it turns into so it doesn't also open a drawer
+        e.preventDefault(); e.stopPropagation();
+        const eat = (c) => { c.preventDefault(); c.stopPropagation(); };
+        addEventListener('click', eat, { capture: true, once: true });
+        setTimeout(() => removeEventListener('click', eat, true), 600);
+      }
+      cancelAnimationFrame(raf);
+      scrollTo(0, landY());
+      finish();
+    }
+    disposers.push(() => { if (state !== 'done') { state = 'done'; unlisten(); } });
+    return { waiting: () => state === 'waiting', running: () => state === 'travel', go, skip };
   }
 
   // =====================================================================
@@ -436,6 +581,10 @@
     A.schedule(ev);
   }
 
+  // the back arrow at the left of a lesson's HUD: one screen back (the ✕ next to it goes straight to the trail)
+  const backBtn = (label, fn) => h('button', { class: 'x hud-back', onclick: fn, 'aria-label': label, title: label + ' (Backspace)', html:
+    '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>' });
+
   function lesson(les, idx) {
     const card = les.cards[idx];
     const n = L.LESSONS.indexOf(les) + 1;
@@ -452,8 +601,10 @@
       const j = idx + d;
       if (j >= 0) lesson(les, j);
     };
+    const back = () => (idx > 0 ? go(-1) : lessons());
     show(h('main', { class: 'lesson' },
       h('div', { class: 'hud' },
+        backBtn(idx > 0 ? 'Previous card' : 'Back to the trail', back),
         h('button', { class: 'x', onclick: lessons, 'aria-label': 'Close lesson' }, '✕'),
         h('div', { class: 'segs' }, les.cards.map((_, i) => h('i', { class: i < idx ? 'ok' : i === idx ? 'cur' : '' })), h('i', { class: 'quizseg' })),
         h('div', { class: 'hud-step' }, `${idx + 1}/${les.cards.length}`)),
@@ -470,6 +621,7 @@
       if (onButton(e)) return;
       if (e.key === 'Enter' || e.key === 'ArrowRight') { e.preventDefault(); go(1); }
       else if (e.key === 'ArrowLeft') go(-1);
+      else if (e.key === 'Backspace') { e.preventDefault(); back(); }
       else if (e.key === ' ') { e.preventDefault(); play(); }
       else if (e.key === 'Escape') lessons();
     };
@@ -532,8 +684,11 @@
       ? (ex.echo ? `${ex.bpm} BPM · after 4 clicks, listen to one bar, then copy it` : `${ex.bpm} BPM · wait for 4 clicks, then hit each gem as it reaches the line`)
       : ex.t === 'find' ? 'Hit the drums in order. No rush.' : 'Listen, then hit the drum you heard.';
     const segs = h('div', { class: 'segs' }, les.ex.map((_, k) => h('i', { class: k < i ? (scores[k] >= 75 ? 'ok' : scores[k] >= 50 ? 'meh' : 'no') : k === i ? 'cur' : '' })));
+    // back: the previous step, or from the first step back to the lesson's last card
+    const back = () => (i > 0 ? exercise(les, i - 1, scores) : lesson(les, les.cards.length - 1));
     show(h('main', { class: 'lesson exscreen' },
       h('div', { class: 'hud' },
+        backBtn(i > 0 ? 'Previous step' : 'Back to the lesson', back),
         h('button', { class: 'x', onclick: lessons, 'aria-label': 'Close lesson' }, '✕'),
         segs,
         h('div', { class: 'hud-step' }, `${i + 1}/${les.ex.length}`)),
@@ -549,6 +704,7 @@
     onKey = (e) => {
       if (onButton(e)) return;
       if (e.key === 'Escape') lessons();
+      else if (e.key === 'Backspace') { e.preventDefault(); back(); }
       else if (e.key === 'Enter') {
         e.preventDefault();
         if (phase === 'done') next();

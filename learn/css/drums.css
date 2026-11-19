@@ -292,3 +292,76 @@ label.srow { grid-template-columns: 110px 1fr; }
   .tr-chip { font-size: 12px; padding: 4px 10px 5px; }
   .tr-start { display: none; }
 }
+
+/* the back arrow in a lesson's HUD */
+.hud-back { display: grid; place-items: center; margin-right: -8px; }
+.hud-back svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 2.6; stroke-linecap: round; stroke-linejoin: round; }
+
+/* ---------- zone-to-zone travel (app.js zoneTravel) ---------- */
+body.cine .tr-jump, body.cine .upbar { opacity: 0; pointer-events: none; }
+/* the new place waits in greyscale, its stops hidden, until the tour card has driven by */
+.tr-biome .tr-bg { transition: filter 1.1s ease; }
+.tr-biome.arriving .tr-bg { filter: grayscale(.9) brightness(.78) contrast(.9); }
+.tr-biome.arriving .tr-fx { opacity: .25; }
+.tr-biome .tr-fx { transition: opacity 1.1s ease; }
+.tr-biome.arriving :is(.tr-node, .tr-chip, .tr-buddy, .tr-end) { opacity: 0; }
+.tr-biome.arrived :is(.tr-node, .tr-buddy, .tr-end) { animation: ta-pop .6s cubic-bezier(.3, 1.6, .5, 1) backwards; }
+.tr-biome.arrived .tr-chip { animation: ta-chip .45s ease-out backwards; }
+@keyframes ta-pop { from { opacity: 0; transform: scale(.2) translateY(20px); } }
+@keyframes ta-chip { from { opacity: 0; transform: translate(-50%, 10px); } }
+
+/* 1 · the trophy just won */
+.tr-node.trophy.cele { z-index: 6; }
+.tr-node.trophy.cele .coin { animation: ta-cele .9s cubic-bezier(.3, 1.5, .5, 1); }
+@keyframes ta-cele { 0% { transform: scale(1); } 25% { transform: scale(.85) translateY(4px); } 55% { transform: scale(1.28) rotate(-6deg); } 75% { transform: scale(1.12) rotate(4deg); } 100% { transform: none; } }
+.ta-burst { position: absolute; left: 50%; top: 40%; width: 0; height: 0; pointer-events: none; }
+.ta-burst i { position: absolute; left: -4px; top: -14px; width: 8px; height: 28px; border-radius: 8px; background: var(--yellow);
+  transform: rotate(var(--a)) translateY(-40px) scaleY(.2); opacity: 0; animation: ta-ray .8s .15s ease-out forwards; }
+.ta-burst i:nth-child(even) { background: #fff; height: 18px; top: -9px; }
+@keyframes ta-ray { 20% { opacity: 1; } to { transform: rotate(var(--a)) translateY(-90px) scaleY(1); opacity: 0; } }
+.ta-xp { position: absolute; left: 50%; bottom: 100%; transform: translateX(-50%); padding: 6px 12px; border-radius: 999px; background: var(--yellow); color: #2a1f00;
+  font: 800 15px var(--display); white-space: nowrap; box-shadow: 0 3px 0 var(--yellow-d); pointer-events: none; animation: ta-xp 1.4s .2s ease-out both; }
+@keyframes ta-xp { from { opacity: 0; transform: translate(-50%, 16px) scale(.6); } 25% { opacity: 1; transform: translate(-50%, 0) scale(1.05); } 80% { opacity: 1; } to { opacity: 0; transform: translate(-50%, -30px); } }
+
+/* …then it waits, glowing, with a "Next stop" bubble until you click it */
+.tr-node.trophy.ready { z-index: 6; }
+.tr-node.trophy.ready .coin { cursor: pointer; animation: ta-ready 1.6s ease-in-out infinite; }
+@keyframes ta-ready { 0%, 100% { box-shadow: 0 8px 0 var(--base), 0 14px 18px rgba(0, 0, 0, .22), 0 0 0 0 rgba(255, 210, 63, .7); }
+  50% { box-shadow: 0 8px 0 var(--base), 0 14px 18px rgba(0, 0, 0, .22), 0 0 0 16px rgba(255, 210, 63, 0); transform: translateY(-3px); } }
+.tr-node.trophy.ready .coin:hover { transform: translateY(-4px) scale(1.04); }
+.tr-chip.ta-go { z-index: 6; padding: 7px 14px 8px; background: var(--yellow); color: #2a1f00; font: 800 14.5px var(--display); box-shadow: 0 3px 0 var(--yellow-d), 0 6px 16px rgba(0, 0, 0, .25);
+  animation: ta-goin .4s cubic-bezier(.3, 1.6, .5, 1) both, tr-bob 1.4s .4s ease-in-out infinite; }
+.tr-chip.ta-go .ta-arrow { display: inline-block; animation: ta-nudge .8s ease-in-out infinite; }
+@keyframes ta-goin { from { opacity: 0; transform: translate(-50%, 8px) scale(.6); } }
+@keyframes ta-nudge { 50% { transform: translateX(4px); } }
+
+/* 3 · the "Next stop" tour card */
+.tr-arrive { position: fixed; inset: 0; z-index: 35; display: grid; place-items: center; padding: 16px; pointer-events: none;
+  background: radial-gradient(closest-side, color-mix(in srgb, var(--ac) 30%, transparent), transparent); animation: ta-fade .35s ease both; }
+.tr-arrive.out { animation: ta-out .4s ease forwards; }
+@keyframes ta-fade { from { opacity: 0; } }
+@keyframes ta-out { to { opacity: 0; } }
+.ta-card { position: relative; display: flex; flex-direction: column; align-items: center; gap: 4px; width: min(360px, 100%); padding: 22px 24px 0; border-radius: 28px; overflow: hidden;
+  background: var(--ac); color: #fff; text-align: center; box-shadow: 0 10px 0 var(--acd), 0 30px 70px rgba(0, 0, 0, .5);
+  animation: ta-stamp .55s cubic-bezier(.3, 1.5, .5, 1) both; }
+.tr-arrive.out .ta-card { animation: ta-lift .4s ease-in forwards; }
+@keyframes ta-stamp { from { transform: scale(.4) rotate(-8deg); opacity: 0; } 60% { opacity: 1; } }
+@keyframes ta-lift { to { transform: translateY(-60px) scale(.9); opacity: 0; } }
+.ta-card::before { content: ''; position: absolute; inset: 0; background: repeating-linear-gradient(-45deg, rgba(255, 255, 255, .07) 0 12px, transparent 12px 24px); pointer-events: none; }
+.ta-eye { position: relative; padding: 4px 12px; border-radius: 999px; background: rgba(0, 0, 0, .22); font: 700 12px var(--body); letter-spacing: .16em; text-transform: uppercase; }
+.ta-mark { position: relative; font-size: 46px; line-height: 1.1; margin-top: 6px; animation: ta-mark .6s .25s cubic-bezier(.3, 1.8, .5, 1) backwards; }
+@keyframes ta-mark { from { transform: scale(0) rotate(-30deg); } }
+.ta-card strong { position: relative; font: 800 32px/1.05 var(--display); text-shadow: 0 2px 0 rgba(0, 0, 0, .15); }
+.ta-card small { position: relative; font: 500 14.5px var(--body); opacity: .9; }
+.ta-road { position: relative; align-self: stretch; height: 58px; margin: 14px -24px 0; background: #3b4152; overflow: hidden; }
+.ta-road::before { content: ''; position: absolute; left: 0; right: 0; top: 40px; height: 3px;
+  background: repeating-linear-gradient(90deg, #ffd23f 0 16px, transparent 16px 34px); animation: ta-dash .35s linear infinite; }
+@keyframes ta-dash { to { background-position: -34px 0; } }
+.ta-van { position: absolute; left: 0; bottom: 14px; width: 92px; animation: ta-drive 1.6s cubic-bezier(.35, 0, .4, 1) .1s both; }
+.ta-van svg { display: block; width: 100%; height: auto; overflow: visible; animation: ta-bump .22s ease-in-out infinite alternate; }
+@keyframes ta-drive { from { transform: translateX(-110px); } 45%, 60% { transform: translateX(calc(180px - 46px)); } to { transform: translateX(420px); } }
+@keyframes ta-bump { to { transform: translateY(-2px) rotate(-1deg); } }
+
+/* the new place's row in the tour rail lights up */
+.tour-row.arrive i { animation: ta-row 1s cubic-bezier(.3, 1.6, .5, 1) 2; }
+@keyframes ta-row { 40% { transform: scale(1.25) rotate(-8deg); box-shadow: 0 0 0 6px color-mix(in srgb, var(--c) 40%, transparent); } }
