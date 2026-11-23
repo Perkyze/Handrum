@@ -23,20 +23,29 @@ Why MIDI instead of a custom protocol:
 
 Fallback for boards **without** native USB (classic ESP32 DevKit with a CP2102/CH340 chip): the firmware writes the same 3 MIDI bytes over the serial port at 115200 baud, and the app reads them with the Web Serial API ("Connect serial" button). Same parser, same mapping.
 
+### The Handpad kit
+
+Eight pads: three toms top left, three cymbals top right (the middle one of each trio sits a little higher), and two bigger pads at the bottom for snare and kick. Both apps draw the pads in that layout, and the computer keys mirror it.
+
+```
+  [1]  [2]  [3]           [6]  [7]  [8]
+            [ 4 ]   [ 5 ]
+```
+
 Default note map (General MIDI drums, matches what DAWs expect):
 
-| Pad | Note | Key |
-|---|---|---|
-| Kick | 36 | A |
-| Snare | 38 | S |
-| Closed hat | 42 | D |
-| Open hat | 46 | F |
-| Low tom | 45 | J |
-| High tom | 48 | K |
-| Clap | 39 | L |
-| Crash | 49 | ; |
+| # | Pad | Note | Key |
+|---|---|---|---|
+| 1 | Tom 1 | 48 | 2 |
+| 2 | Tom 2 | 45 | 3 |
+| 3 | Floor tom | 43 | 4 |
+| 4 | Snare | 38 | V |
+| 5 | Kick | 36 | N |
+| 6 | Open hi-hat | 46 | 8 |
+| 7 | Closed hi-hat | 42 | 9 |
+| 8 | Ride | 51 | 0 |
 
-Every pad has a **Learn** button, so whatever note the hardware sends can be assigned without reflashing.
+The keys also work by position on other keyboard layouts (the key under "2" plays tom 1 on AZERTY too). Every pad has a **Learn** button, so whatever note the hardware sends can be assigned without reflashing.
 
 ## Folder layout
 
@@ -58,7 +67,7 @@ Web MIDI and Web Serial need Chrome or Edge, and a page served from `localhost` 
 python -m http.server 8000 --directory web
 ```
 
-Then open http://localhost:8000. Click once to enable audio. Play with the keyboard or mouse right away; click **Connect MIDI** or **Connect serial** for hardware.
+Then open http://localhost:8000 (no Python? `powershell -ExecutionPolicy Bypass -File learn/serve.ps1 -Port 8150 -Root web` serves it at http://localhost:8150). Click once to enable audio. Play with the keyboard or mouse right away; click **Connect MIDI** or **Connect serial** for hardware.
 
 ## Hardware
 
@@ -68,14 +77,14 @@ The DevKitC V4 (ESP32-WROOM-32) has no native USB: its USB port goes through a U
 
 | Pad | GPIO (label on board) | Note |
 |---|---|---|
-| Kick | 36 (VP) | 36 |
-| Snare | 39 (VN) | 38 |
-| Closed hat | 34 | 42 |
-| Open hat | 35 | 46 |
-| Low tom (commented out) | 32 | 45 |
-| Crash (commented out) | 33 | 49 |
+| 5 · Kick | 36 (VP) | 36 |
+| 4 · Snare | 39 (VN) | 38 |
+| 7 · Closed hi-hat | 34 | 42 |
+| 6 · Open hi-hat | 35 | 46 |
+| 1 · Tom 1 (commented out) | 32 | 48 |
+| 8 · Ride (commented out) | 33 | 51 |
 
-- Those six are the ADC1 pins: max 6 pads directly, more with a 16-channel analog mux (CD74HC4067).
+- Those six are the ADC1 pins: max 6 pads directly, so tom 2 and the floor tom need a 16-channel analog mux (CD74HC4067) or a second board.
 - Only enable pads that are wired. A floating pin triggers random hits.
 - Upload: Arduino IDE → board **ESP32 Dev Module**, no extra libraries. If the upload hangs on "Connecting…", hold **BOOT** until it starts.
 - **Close the Arduino Serial Monitor** before clicking Connect serial in the app: only one program can open the port.

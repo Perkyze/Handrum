@@ -20,27 +20,34 @@ The open product question was: **an advanced pad for producers who use a DAW, or
 - **Per piezo:** a 1 MΩ resistor and a 3.3 V Zener diode, both between the piezo and ground, to protect the pin. Piezos can output tens of volts on a hard hit.
 - **Firmware** (`firmware/drum_pads/drum_pads.ino`):
   - For each pad, it waits for a threshold, looks for the peak for 2 ms (`SCAN_US`), sends Note On, then ignores that pad for 40 ms (`MASK_MS`).
-  - 4 pads are enabled (GPIO 36, 39, 34, 35) and 2 are commented out (32, 33).
+  - 4 pads are enabled (GPIO 36, 39, 34, 35: kick, snare, closed and open hi-hat) and 2 are commented out (32, 33: tom 1, ride). Tom 2 and the floor tom need a mux or a second board.
   - Default threshold is 150, and `PEAK_FULL` is 3000 (12-bit ADC).
 - **For a product**, the ESP32-S3 gives plug-and-play USB MIDI (set `USE_USB_MIDI 1`). Candidates:
   - Seeed XIAO ESP32S3: 21 × 17.5 mm, native USB-C, battery charging built in.
   - Adafruit Feather ESP32-S3: 52.3 × 22.7 × 7.2 mm, native USB, LiPo charger.
   - ESP32-S3-DevKitC-1: 62.7 × 25.4 mm, native USB, 10 ADC1 channels.
 
-## MIDI map (General MIDI, channel 10)
+## The kit and its MIDI map (General MIDI, channel 10)
 
-| Pad | Note | Key in the app |
-|---|---|---|
-| Kick | 36 | A |
-| Snare | 38 | S |
-| Closed hat | 42 | D |
-| Open hat | 46 | F |
-| Low tom | 45 | J |
-| High tom | 48 | K |
-| Clap | 39 | L |
-| Crash | 49 | ; |
+The product has 8 pads: three toms top left (1 2 3), three cymbals top right (6 7 8), the middle pad of each trio a little higher, and two bigger pads at the bottom (4 snare, 5 kick). The computer keys mirror that layout, in both apps.
 
-Every pad in the app has **Learn**, so any note can be remapped without reflashing.
+```
+  [1]  [2]  [3]           [6]  [7]  [8]
+            [ 4 ]   [ 5 ]
+```
+
+| # | Pad | Note | Key |
+|---|---|---|---|
+| 1 | Tom 1 | 48 | 2 |
+| 2 | Tom 2 | 45 | 3 |
+| 3 | Floor tom | 43 | 4 |
+| 4 | Snare | 38 | V |
+| 5 | Kick | 36 | N |
+| 6 | Open hi-hat | 46 | 8 |
+| 7 | Closed hi-hat | 42 | 9 |
+| 8 | Ride | 51 | 0 |
+
+There is no crash: a big accent is kick + open hi-hat together. Every pad in the app has **Learn**, so any note can be remapped without reflashing.
 
 ## Figma
 
@@ -123,7 +130,7 @@ In a simple arm model (forearm 26 cm):
 
 | Board | Rig | Pins (ADC1) | Notes |
 |---|---|---|---|
-| 1 | **Kit 6**: kick, snare, hat, tom, floor tom, crash | 36, 39, 34, 35, 32, 33 | MIDI 36, 38, 42, 45, 43, 49 |
+| 1 | **Kit 6**: kick, snare, closed hat, open hat, tom 1, ride (6 of the Handpad's 8 pads) | 36, 39, 34, 35, 32, 33 | MIDI 36, 38, 42, 46, 48, 51 |
 | 2 | **Arc 6**: six hand-percussion pads on a curved base | 36, 39, 34, 35, 32, 33 | e.g. bongos 60/61, congas 62/63/64, clap 39 |
 | 3 | **Feel lab**: 4 sample pads with different material stacks + 1 FSR | 36, 39, 34, 35 + 32 (FSR) | Compare feel and velocity in the app's Monitor |
 

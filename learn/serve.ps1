@@ -1,8 +1,9 @@
 # Tiny static file server for local preview — no installs needed.
 # Usage:  powershell -ExecutionPolicy Bypass -File serve.ps1   then open http://localhost:8140
-param([int]$Port = 8140)
+#         -Root ..\web serves another folder (the Handpad pad app), e.g. -Port 8150 -Root web from the repo root
+param([int]$Port = 8140, [string]$Root = '')
 
-$root = Split-Path -Parent $MyInvocation.MyCommand.Path
+$root = if ($Root) { (Resolve-Path $Root).Path } else { Split-Path -Parent $MyInvocation.MyCommand.Path }
 $types = @{
   '.html' = 'text/html; charset=utf-8'; '.css' = 'text/css; charset=utf-8'; '.js' = 'text/javascript; charset=utf-8'
   '.json' = 'application/json'; '.svg' = 'image/svg+xml'; '.png' = 'image/png'; '.ico' = 'image/x-icon'; '.webmanifest' = 'application/manifest+json'

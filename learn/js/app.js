@@ -76,6 +76,8 @@
     '<svg viewBox="0 0 64 64"><rect width="64" height="64" rx="16" fill="#ffd23f"/><ellipse cx="32" cy="40" rx="18" ry="6" fill="#15122b"/><rect x="14" y="26" width="36" height="14" fill="#15122b"/><ellipse cx="32" cy="26" rx="18" ry="6" fill="#fdf8ec" stroke="#15122b" stroke-width="3"/><path d="M20 10 L30 22 M44 10 L34 22" stroke="#15122b" stroke-width="4" stroke-linecap="round"/></svg>' });
   const speaker = () => h('span', { class: 'ico', 'aria-hidden': 'true', html:
     '<svg viewBox="0 0 24 24"><path d="M4 9v6h4l5 4V5L8 9H4z" fill="currentColor"/><path d="M16 8.5a5 5 0 010 7M18.5 6a8.5 8.5 0 010 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>' });
+  const loopIcon = () => h('span', { class: 'ico', 'aria-hidden': 'true', html:
+    '<svg viewBox="0 0 24 24"><path d="M4 12a6 6 0 0 1 6-6h8M15 3l3 3-3 3M20 12a6 6 0 0 1-6 6H6M9 21l-3-3 3-3" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>' });
   const starRow = (n) => h('span', { class: 'stars', 'aria-label': n + ' of 3 stars' }, [0, 1, 2].map((i) => h('i', { class: i < n ? 'on' : '' }, '★')));
   const bindHtml = (text) => text.replace(/\{(\w+)\}/g, (m, id) => K.byId(id) ? '<kbd class="bind" style="--c:' + K.byId(id).color + '">' + R.esc(K.keyFor(id)) + '</kbd>' : m);
 
@@ -144,11 +146,11 @@
     });
     return sel;
   }
+  // the keys mirror the pad, so the preview is the pad itself (tap it or press the keys)
   function keyPreview() {
-    return h('div', { class: 'keyprev' }, ['kick', 'snare', 'hat'].map((id) => {
-      const d = K.byId(id);
-      return h('span', { style: { '--c': d.color } }, h('kbd', null, K.keyFor(id)), d.name);
-    }));
+    const k = kitEl([]);
+    k.classList.add('kit-small');
+    return k;
   }
 
   // =====================================================================
@@ -172,13 +174,16 @@
       h('div', { class: 'brand big' }, logo(), h('span', null, 'Backbeat')),
       h('h1', null, 'Learn drums a few minutes at a time.'),
       h('ul', { class: 'pitch' },
-        h('li', null, h('b', null, 'Start from zero. '), 'Meet one drum at a time, then build real beats.'),
-        h('li', null, h('b', null, 'Every lesson is a game. '), 'Hit the notes as they slide in, chase combos and stars.'),
+        h('li', null, h('b', null, 'Start from zero. '), 'Your first real beat by lesson 3.'),
+        h('li', null, h('b', null, 'Every lesson is a game. '), 'Three quick steps: hit the notes as they slide in, chase combos and stars.'),
+        h('li', null, h('b', null, 'Practice when you need it. '), 'Any groove loops at your speed and climbs as you get it.'),
         h('li', null, h('b', null, 'Play your way. '), 'Your Handpad, any MIDI pad, the keyboard or a tap on screen.')),
       h('p', { class: 'eyebrow' }, 'Have you played drums before?'),
       h('div', { class: 'tiers' }, btns),
+      h('p', { class: 'eyebrow' }, 'No pad yet? The keys sit where the pads are'),
+      prev,
       h('p', { class: 'eyebrow' }, 'Which DAW do you use with your pad?'),
-      h('div', { class: 'dawbox' }, sel, tip, prev),
+      h('div', { class: 'dawbox' }, sel, tip),
       h('button', { class: 'btn big', onclick: go }, 'Let’s play'),
       h('p', { class: 'fine' }, 'You can change your DAW and every key in Settings. Progress is saved on this device.')));
     onKey = (e) => { if (e.key === 'Enter' && !onButton(e)) go(); };
@@ -235,6 +240,7 @@
         h('div', { class: 'pop-acts' },
           !info.open ? popGo(`🔒 Finish chapter ${ci} first`, null)
             : popGo(rec ? `Play again +${20} XP` : `Start +${40} XP`, () => lesson(les, 0)),
+          rec && info.open ? h('button', { class: 'pop-hear', 'aria-label': 'Practice the groove', title: 'Practice the groove', onclick: () => { A.unlock(); practiceGroove(les, lessons); } }, loopIcon()) : null,
           hear && info.open ? h('button', { class: 'pop-hear', 'aria-label': 'Hear it', title: 'Hear it', onclick: () => demo(hear.a, document.body) }, speaker()) : null)];
     }
     const el = h('div', { class: 'tr-pop' + (plain ? ' plain' : ''), role: 'dialog', 'aria-label': les ? les.title : `Chapter ${ci + 1} trophy`, style: chapterColor(ci) }, body);
@@ -671,8 +677,10 @@
       if (i + 1 < les.ex.length) exercise(les, i + 1, scores);
       else results(les, scores);
     };
+    let lastAcc = 0;
     function done(res) {
       scores[i] = Math.max(scores[i] || 0, res.acc);
+      lastAcc = res.acc;
       phase = 'done';
       segs.children[i].className = res.acc >= 75 ? 'ok' : res.acc >= 50 ? 'meh' : 'no';
       const [title, tone] = verdict(res.acc, ex.t === 'play');
@@ -683,6 +691,7 @@
         if (res.early > res.late * 2 && res.early >= 3) tip = 'You’re rushing a little: wait for the click.';
         else if (res.late > res.early * 2 && res.late >= 3) tip = 'You’re a bit late. If it keeps happening with your pad, try Calibrate in Settings.';
         else if (res.extra >= 4) tip = 'A few extra hits: only play when a gem reaches the line.';
+        if (res.acc < 75) tip = (tip ? tip + ' ' : '') + 'Not dialed in yet? Practice loops it slower and speeds up as you get it.';
       } else if (res.acc < 100) tip = ex.t === 'ear' ? 'Use “Play it again” as many times as you like.' : 'Look at the key on each chip before you hit.';
       [h('div', { class: 'exres-head' }, h('strong', null, `${res.acc}%`), h('span', null, title)),
         ex.t === 'play' ? h('div', { class: 'tiles' },
@@ -704,7 +713,10 @@
         return;
       }
       if (phase === 'run' || phase === 'preview') ctrls.append(h('button', { class: 'ghost', onclick: () => { engine.stop(); phase = 'ready'; setCtrls(); } }, '■ Stop'));
-      else if (phase === 'done') ctrls.append(h('button', { class: 'ghost', onclick: start }, '↻ Try again'), h('button', { class: 'btn', onclick: next }, i + 1 < les.ex.length ? 'Next' : 'Finish', h('kbd', null, '↵')));
+      else if (phase === 'done') ctrls.append(
+        h('button', { class: 'ghost', onclick: start }, '↻ Try again'),
+        h('button', { class: 'ghost' + (lastAcc < 75 ? ' hint' : ''), onclick: () => practice(les, ex, les.id + ':' + i, lastAcc < 75, () => exercise(les, i, scores)) }, lastAcc < 75 ? '🔁 Practice slower' : '🔁 Practice'),
+        h('button', { class: 'btn', onclick: next }, i + 1 < les.ex.length ? 'Next' : 'Finish', h('kbd', null, '↵')));
       else ctrls.append(h('button', { class: 'ghost', onclick: preview }, speaker(), 'Hear it first'), h('button', { class: 'btn', onclick: start }, '▶ Start', h('kbd', null, '↵')));
     }
     const sub = ex.t === 'play'
@@ -759,13 +771,113 @@
       h('div', { class: 'tiles' }, tile('Accuracy', acc + '%', 't-mint'), tile('Stars', out.stars + ' / 3', 't-yellow'), tile('XP', '+' + out.xp, 't-violet')),
       out.trophy !== null ? h('div', { class: 'prize' }, h('span', { class: 'prize-ico' }, '🏆'),
         h('div', null, h('span', { class: 'eyebrow' }, `Chapter ${ci + 1} · ${CHAPTERS[ci].place}`), h('strong', null, 'Trophy won!'), h('span', null, `+60 XP. ${ci + 1 < CHAPTERS.length ? `Next stop: ${CHAPTERS[ci + 1].place}.` : 'You finished the tour!'}`))) : null,
-      out.stars < 3 ? h('p', { class: 'fine' }, out.stars === 2 ? 'Score 90% or more for 3 stars.' : 'Score 70% for 2 stars, 90% for 3. Replay any time.') : null,
+      out.stars < 3 ? h('p', { class: 'fine' }, out.stars === 2 ? 'Score 90% or more for 3 stars. Practice loops the groove until it’s dialed in.' : 'Score 70% for 2 stars, 90% for 3. Practice the groove at your own pace, then replay.') : null,
       h('button', { class: 'btn big', onclick: lessons }, 'Back to the trail', h('kbd', null, '↵')),
-      h('button', { class: 'ghost', onclick: () => lesson(les, 0) }, '↻ Replay lesson')));
+      h('div', { class: 'row-center' },
+        h('button', { class: 'ghost', onclick: () => lesson(les, 0) }, '↻ Replay lesson'),
+        L.grooveOf(les) ? h('button', { class: 'ghost' + (out.stars < 2 ? ' hint' : ''), onclick: () => practiceGroove(les, lessons, out.stars < 2) }, '🔁 Practice the groove') : null)));
     A.sfx('win');
     if (out.stars === 3 || out.trophy !== null) confetti();
     if (out.levelUp) later(() => toast(`⬆️ Level ${out.levelUp.level}: ${out.levelUp.title}`), 700);
     onKey = (e) => { if (e.key === 'Enter' && !onButton(e)) lessons(); };
+  }
+
+  // =====================================================================
+  // Practice: loop a groove until it's dialed in. Each round is a count-in, then the pattern (twice if it's one bar).
+  // 90 %+ speeds the next round up by 5 BPM, under 60 % slows it down. 90 %+ at the step's own tempo = dialed in.
+  // key: where the record is saved (a lesson id for its groove, "lesson:step" for a step). slow: start at 80 % tempo.
+  // =====================================================================
+  const round5 = (n) => Math.round(n / 5) * 5;
+  function practiceGroove(les, back, slow) {
+    const g = L.grooveOf(les);
+    if (g) practice(les, g, les.id, !!slow, back);
+  }
+  function practice(les, ex, key, slow, back) {
+    const target = ex.bpm, div = ex.div || 4;
+    const bars = Math.ceil(L.parse(ex.pat, div).steps / (div * 4));
+    const rec0 = S.practiceOf(key);
+    let bpm = target, auto = true, going = false, engine = null, timer = 0;
+    const kit = kitEl([]);
+    const holder = h('div', { class: 'pr-hw' });
+    const bpmOut = h('b', null, '');
+    const meter = h('i');
+    const badge = h('span', { class: 'pr-badge' + (rec0 && rec0.dialed ? ' on' : '') }, rec0 && rec0.dialed ? '✓ Dialed in' : `Goal: 90% at ${target} BPM`);
+    const bestOut = h('span', { class: 'pr-best' }, rec0 && rec0.best ? `Best: ${rec0.best} BPM` : '');
+    const log = h('div', { class: 'pr-log', 'aria-label': 'Rounds so far' });
+    const msg = h('p', { class: 'pr-msg', 'aria-live': 'polite' }, slow ? 'Starting a bit slower. Nail a round and it speeds up.' : 'Hit Start, then play along. It keeps looping.');
+    const ctrls = h('div', { class: 'exctl' });
+    const autoBtn = h('button', { class: 'ghost small pr-auto on', 'aria-pressed': 'true', onclick: () => {
+      auto = !auto; autoBtn.classList.toggle('on', auto); autoBtn.setAttribute('aria-pressed', String(auto));
+      autoBtn.textContent = auto ? 'Auto tempo: on' : 'Auto tempo: off';
+    } }, 'Auto tempo: on');
+    function setBpm(v) {
+      bpm = clamp(v, 40, target + 40);
+      bpmOut.textContent = bpm;
+      meter.style.width = Math.min(100, (bpm - 40) / Math.max(1, target - 40) * 100) + '%';
+      meter.classList.toggle('at', bpm >= target);
+      if (!going) build();
+    }
+    function build() {
+      if (engine) engine.stop();
+      engine = PL.highway({ pat: ex.pat, bpm, div, loops: bars > 1 ? 1 : 2 }, { done, target: (ids) => kit.target(ids) });
+      holder.replaceChildren(engine.el);
+    }
+    function go() { clearTimeout(timer); A.unlock(); going = true; build(); engine.start(); setCtrls(); }
+    function pause() { clearTimeout(timer); going = false; build(); setCtrls(); msg.textContent = 'Paused. Start again when you’re ready.'; }
+    function done(res) {
+      const out = S.practiced(key, bpm, res.acc, target);
+      const was = bpm, step = !auto ? 0 : res.acc >= 90 ? 5 : res.acc < 60 ? -5 : 0;
+      log.prepend(h('span', { class: res.acc >= 90 ? 'ok' : res.acc >= 60 ? 'meh' : 'no' }, `${res.acc}% @ ${was}${step > 0 ? ' ↑' : step < 0 ? ' ↓' : ''}`));
+      while (log.children.length > 10) log.lastChild.remove();
+      if (out.rec.best) bestOut.textContent = `Best: ${out.rec.best} BPM`;
+      if (out.dialed) { badge.textContent = '✓ Dialed in · +15 XP'; badge.classList.add('on'); A.sfx('win'); confetti(); }
+      else A.sfx(res.acc >= 90 ? 'good' : res.acc >= 60 ? 'tick' : 'bad');
+      going = going && document.body.contains(holder);
+      bpm = clamp(bpm + step, 40, target + 40);
+      bpmOut.textContent = bpm;
+      meter.style.width = Math.min(100, (bpm - 40) / Math.max(1, target - 40) * 100) + '%';
+      meter.classList.toggle('at', bpm >= target);
+      msg.textContent = out.dialed ? `Dialed in at ${was} BPM! Keep going for speed, or head back.`
+        : res.acc >= 90 ? (step ? `Clean! Next round: ${bpm} BPM.` : 'Clean!')
+        : res.acc >= 60 ? 'Close. Same tempo again.' : step ? `Slowing down to ${bpm} BPM.` : 'Keep at it.';
+      if (going) timer = later(go, 1600);
+      else setCtrls();
+    }
+    function setCtrls() {
+      ctrls.replaceChildren(
+        going ? h('button', { class: 'ghost', onclick: pause }, '■ Pause') : h('button', { class: 'btn', onclick: go }, '▶ Start', h('kbd', null, '↵')),
+        h('button', { class: going ? 'btn' : 'ghost', onclick: back }, 'Done'));
+    }
+    show(h('main', { class: 'lesson exscreen practice' },
+      h('div', { class: 'hud' },
+        backBtn('Back', back),
+        h('button', { class: 'x', onclick: lessons, 'aria-label': 'Close practice' }, '✕'),
+        h('div', { class: 'hud-title' }, 'Practice'),
+        h('div', { class: 'hud-step' }, '🔁')),
+      h('article', { class: 'lcard excard' },
+        h('div', { class: 'eyebrow' }, `🔁 Practice · ${les.title}`),
+        h('h2', null, ex.title),
+        h('p', { class: 'exsub' }, 'It loops, with a count-in each round. Score 90% and the next round is 5 BPM faster; under 60% it slows down.'),
+        h('div', { class: 'pr-tempo' },
+          h('div', { class: 'pr-dial' },
+            h('button', { class: 'ghost small', 'aria-label': 'Slower', title: 'Slower (↓)', onclick: () => setBpm(bpm - 5) }, '−5'),
+            h('div', { class: 'pr-bpm' }, bpmOut, h('small', null, 'BPM')),
+            h('button', { class: 'ghost small', 'aria-label': 'Faster', title: 'Faster (↑)', onclick: () => setBpm(bpm + 5) }, '+5')),
+          h('div', { class: 'pr-side' },
+            h('div', { class: 'pr-meter', title: `Target ${target} BPM` }, meter),
+            h('div', { class: 'pr-meta' }, badge, bestOut, autoBtn))),
+        holder, msg, log, ctrls),
+      kit));
+    setBpm(slow ? Math.max(45, round5(target * 0.8)) : target);
+    setCtrls();
+    disposers.push(() => { clearTimeout(timer); if (engine) engine.stop(); });
+    onKey = (e) => {
+      if (onButton(e)) return;
+      if (e.key === 'Enter') { e.preventDefault(); if (going) pause(); else go(); }
+      else if (e.key === 'ArrowUp') { e.preventDefault(); setBpm(bpm + 5); }
+      else if (e.key === 'ArrowDown') { e.preventDefault(); setBpm(bpm - 5); }
+      else if (e.key === 'Escape' || e.key === 'Backspace') { e.preventDefault(); back(); }
+    };
   }
 
   // =====================================================================
@@ -796,11 +908,25 @@
       const src = { key: 'keyboard', midi: 'MIDI', serial: 'Handpad (serial)', tap: 'screen tap', demo: 'demo' }[l.src] || l.src;
       mon.innerHTML = `<b style="color:${d.color}">${d.name}</b> · key ${R.esc(K.keyLabel(b.key))} · note ${b.note} (${K.noteName(b.note, daw.oct)}) · from ${src}${l.src === 'midi' || l.src === 'serial' ? ' · velocity ' + l.vel : ''}`;
     };
+    // every groove from the chapters you've opened, ready to loop in Practice
+    const isl = S.chapters();
+    const open = L.LESSONS.filter((l) => isl[CHAPTERS.findIndex((c) => c.ids.includes(l.id))].open && L.grooveOf(l));
+    const pick = h('select', { class: 'select', 'aria-label': 'Groove to practice' }, open.map((l) => {
+      const g = L.grooveOf(l), p = S.practiceOf(l.id);
+      return h('option', { value: l.id }, `${l.icon} ${l.title} · ${g.title} (${g.bpm} BPM)${p && p.dialed ? ' ✓' : ''}`);
+    }));
+    const firstTodo = open.find((l) => !(S.practiceOf(l.id) || {}).dialed && S.load().lessons[l.id]);
+    if (firstTodo) pick.value = firstTodo.id;
+    const grooves = h('section', { class: 'card metro' },
+      h('div', { class: 'metro-top' }, h('strong', null, 'Practice a groove'), h('span', { class: 'mute small' }, 'loops until it’s dialed in')),
+      pick,
+      h('button', { class: 'ghost', onclick: () => { A.unlock(); practiceGroove(L.byId(pick.value), jam); } }, '🔁 Practice'));
     show(h('main', { class: 'jam' }, topbar(),
-      h('div', { class: 'learn-head' }, h('h1', null, 'Jam'), h('p', { class: 'mute' }, `Play anything you like. Keys follow ${daw.short || daw.name}.`)),
+      h('div', { class: 'learn-head' }, h('h1', null, 'Jam'), h('p', { class: 'mute' }, 'Play anything you like. The keys sit where the pads are.')),
       kit,
       mon,
-      h('section', { class: 'card metro' }, h('div', { class: 'metro-top' }, h('strong', null, 'Metronome'), h('span', null, bpmOut, ' BPM')), range, toggle)), 'jam');
+      h('section', { class: 'card metro' }, h('div', { class: 'metro-top' }, h('strong', null, 'Metronome'), h('span', null, bpmOut, ' BPM')), range, toggle),
+      open.length ? grooves : null), 'jam');
     // listeners go in after show(), which clears the previous screen's
     const off = K.on(() => describe());
     let lastNote = null;
@@ -820,12 +946,12 @@
     const tip = h('p', { class: 'daw-tip' }, daw.tip);
     const sel = dawSelect(() => settings());
     const table = h('div', { class: 'binds', role: 'table', 'aria-label': 'Drum binds' },
-      h('div', { class: 'brow bhead', role: 'row' }, h('span', null, 'Drum'), h('span', null, 'Key'), h('span', null, 'MIDI note'), h('span')),
-      K.DRUMS.map((d) => {
+      h('div', { class: 'brow bhead', role: 'row' }, h('span', null, 'Pad'), h('span', null, 'Key'), h('span', null, 'MIDI note'), h('span')),
+      K.byPad().map((d) => {
         const b = K.bind(d.id);
         const learnBtn = h('button', { class: 'ghost small', onclick: () => learn(d.id, row, learnBtn) }, 'Learn');
         const row = h('div', { class: 'brow', role: 'row', 'data-drum': d.id, style: { '--c': d.color } },
-          h('span', { class: 'bname' }, h('i', { class: 'dot' }), d.name),
+          h('span', { class: 'bname' }, h('i', { class: 'dot' }), h('em', { class: 'bpad' }, String(d.pad)), d.name),
           h('span', null, h('kbd', { class: 'bind', style: { '--c': d.color } }, K.keyLabel(b.key))),
           h('span', { class: 'bnote' }, b.note == null ? '—' : `${b.note} · ${K.noteName(b.note, daw.oct)}`),
           learnBtn);
@@ -923,7 +1049,7 @@
       h('div', { class: 'learn-head' }, h('h1', null, 'Settings')),
       h('section', { class: 'card' },
         h('h3', null, 'Your DAW'),
-        h('p', { class: 'mute small' }, 'Your pad plays your DAW’s drums, so Backbeat listens for the same keys and notes. Pick yours and the binds follow its defaults.'),
+        h('p', { class: 'mute small' }, 'The Handpad sends General MIDI notes, which is what most DAW drum kits expect. Pick your DAW to see the notes the way it names them.'),
         sel, tip,
         table,
         h('div', { class: 'row-end' }, h('span', { class: 'mute small' }, daw.id === 'custom' ? 'Press Learn, then a key or a pad.' : 'Defaults are a starting point. Press Learn on any drum to make your own (switches to Custom).'),
@@ -947,5 +1073,6 @@
   // ---------- start ----------
   if (S.load().onboarded) lessons(); else onboarding();
   // handy while developing: Backbeat.lesson('rock') or Backbeat.ex('rock', 3) from the console
-  window.Backbeat = { lesson: (id) => lesson(L.byId(id), 0), ex: (id, i) => exercise(L.byId(id), i || 0, []), results: (id, acc) => results(L.byId(id), L.byId(id).ex.map(() => acc || 80)), lessons, settings, jam };
+  window.Backbeat = { lesson: (id) => lesson(L.byId(id), 0), ex: (id, i) => exercise(L.byId(id), i || 0, []), results: (id, acc) => results(L.byId(id), L.byId(id).ex.map(() => acc || 80)),
+    practice: (id, slow) => practiceGroove(L.byId(id), lessons, slow), lessons, settings, jam };
 })();

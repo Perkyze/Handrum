@@ -18,54 +18,55 @@
     return r;
   };
 
-  // The seven drums a beginner meets. Notes follow General MIDI (channel 10), like the Handpad firmware.
-  // ch: the one-letter code used in lesson patterns.
+  // The Handpad's eight pads. Notes follow General MIDI (channel 10), like the Handpad firmware.
+  // ch: the one-letter code used in lesson patterns. pad: the number printed on the physical pad (1–8).
+  // Listed top to bottom like drum notation (cymbals, toms, snare, kick): that's the lane order in the game.
   const DRUMS = [
-    { id: 'crash', ch: 'c', name: 'Crash', note: 49, color: '#ff7ac6', dark: '#c4458f' },
-    { id: 'open', ch: 'o', name: 'Open hi-hat', short: 'Open hat', note: 46, color: '#3ddc97', dark: '#1d9a66' },
-    { id: 'hat', ch: 'h', name: 'Hi-hat', note: 42, color: '#4cc9f0', dark: '#2489b0' },
-    { id: 'tom', ch: 't', name: 'Tom', note: 45, color: '#9b7bff', dark: '#6a4fd0' },
-    { id: 'snare', ch: 's', name: 'Snare', note: 38, color: '#ffd23f', dark: '#c9960a' },
-    { id: 'floor', ch: 'f', name: 'Floor tom', short: 'Floor', note: 43, color: '#ff9f43', dark: '#c66e17' },
-    { id: 'kick', ch: 'k', name: 'Kick', note: 36, color: '#ff6b6b', dark: '#c44343' },
+    { id: 'ride', ch: 'r', pad: 8, name: 'Ride', note: 51, color: '#b6e35a', dark: '#7da52c', cym: true },
+    { id: 'open', ch: 'o', pad: 6, name: 'Open hi-hat', short: 'Open hat', note: 46, color: '#3ddc97', dark: '#1d9a66', cym: true },
+    { id: 'hat', ch: 'h', pad: 7, name: 'Closed hi-hat', short: 'Hi-hat', note: 42, color: '#4cc9f0', dark: '#2489b0', cym: true },
+    { id: 'tom1', ch: 't', pad: 1, name: 'Tom 1', note: 48, color: '#9b7bff', dark: '#6a4fd0' },
+    { id: 'tom2', ch: 'm', pad: 2, name: 'Tom 2', note: 45, color: '#ff7ac6', dark: '#c4458f' },
+    { id: 'snare', ch: 's', pad: 4, name: 'Snare', note: 38, color: '#ffd23f', dark: '#c9960a' },
+    { id: 'floor', ch: 'f', pad: 3, name: 'Floor tom', short: 'Floor', note: 43, color: '#ff9f43', dark: '#c66e17' },
+    { id: 'kick', ch: 'k', pad: 5, name: 'Kick', note: 36, color: '#ff6b6b', dark: '#c44343' },
   ];
   const byId = (id) => DRUMS.find((d) => d.id === id);
   const byCh = (c) => DRUMS.find((d) => d.ch === c);
+  const byPad = () => DRUMS.slice().sort((a, b) => a.pad - b.pad);
 
-  // Computer-keyboard layouts DAWs use to play notes, with the octave set so the first key is note 36 (the kick).
-  // "home": A W S E D F T G Y H U J K O L P ; '  (Ableton, Logic, GarageBand…)
-  // "tracker": Z S X D C V G B H N J M , L . ; /  (FL Studio, Cubase, REAPER…)
-  const HOME = { 36: 'a', 37: 'w', 38: 's', 39: 'e', 40: 'd', 41: 'f', 42: 't', 43: 'g', 44: 'y', 45: 'h', 46: 'u', 47: 'j', 48: 'k', 49: 'o', 50: 'l', 51: 'p', 52: ';', 53: "'" };
-  const TRACKER = { 36: 'z', 37: 's', 38: 'x', 39: 'd', 40: 'c', 41: 'v', 42: 'g', 43: 'b', 44: 'h', 45: 'n', 46: 'j', 47: 'm', 48: ',', 49: 'l', 50: '.', 51: ';', 52: '/' };
-  const fromLayout = (L) => Object.fromEntries(DRUMS.map((d) => [d.id, { key: L[d.note], note: d.note }]));
+  // The keyboard mirrors the pad: 2 3 4 for the toms (top left), 8 9 0 for the cymbals (top right),
+  // V and N for snare and kick (the two big pads at the bottom).
+  const KEYS = { tom1: '2', tom2: '3', floor: '4', snare: 'v', kick: 'n', open: '8', hat: '9', ride: '0' };
+  const HANDPAD = Object.fromEntries(DRUMS.map((d) => [d.id, { key: KEYS[d.id], note: d.note }]));
 
-  // oct: how the DAW names octaves. Note name = letter + (floor(note / 12) + oct): 36 is C1 with -2, C2 with -1, C3 with 0.
+  // DAW presets. The keys always follow the pad's layout; what a preset changes is how its DAW names notes
+  // (oct: note name = letter + (floor(note / 12) + oct), so 36 is C1 with -2, C2 with -1, C3 with 0) and the setup tip.
   const DAWS = [
     { id: 'handpad', name: 'No DAW — Handpad on its own', short: 'Handpad', oct: -2,
-      binds: { crash: { key: ';', note: 49 }, open: { key: 'f', note: 46 }, hat: { key: 'd', note: 42 }, tom: { key: 'j', note: 45 },
-        snare: { key: 's', note: 38 }, floor: { key: 'k', note: 43 }, kick: { key: 'a', note: 36 } },
-      tip: 'The pad’s own map: General MIDI notes on channel 10. The keys match the Handpad web app.' },
-    { id: 'ableton', name: 'Ableton Live', oct: -2, binds: fromLayout(HOME),
-      tip: 'A Drum Rack starts at C1 on the bottom-left pad. For the keyboard, turn on Computer MIDI Keyboard (M), then press Z twice so the octave reads C1.' },
-    { id: 'fl', name: 'FL Studio', oct: 0, binds: fromLayout(TRACKER),
-      tip: 'FPC’s default layout uses General MIDI notes (kick on pad 2, snare on pad 6, closed hat on pad 3). FL calls note 36 “C3”. With Typing keyboard to piano on, set the octave so Z plays C3.' },
-    { id: 'logic', name: 'Logic Pro', oct: -2, binds: fromLayout(HOME),
-      tip: 'Drum Kit Designer and Drum Machine Designer follow General MIDI (kick on C1). Open Musical Typing (⌘K) and press Z twice so it starts at C1.' },
-    { id: 'garageband', name: 'GarageBand', oct: -2, binds: fromLayout(HOME),
-      tip: 'Drummer and drum kits follow General MIDI (kick on C1). Open Musical Typing (⌘K) and press Z twice so it starts at C1.' },
-    { id: 'protools', name: 'Pro Tools', oct: -2, binds: fromLayout(HOME),
-      tip: 'Most drum instruments follow General MIDI (kick on C1). If you play from the computer keyboard, set its octave so A plays C1.' },
-    { id: 'cubase', name: 'Cubase', oct: -2, binds: fromLayout(TRACKER),
-      tip: 'Groove Agent kits follow General MIDI (kick on C1). Open the Virtual Keyboard (Alt+K) and shift the octave so Z plays C1.' },
-    { id: 'studioone', name: 'Studio One', oct: -2, binds: fromLayout(HOME),
-      tip: 'Impact XT starts at C1 and its kits follow General MIDI. If you play from the QWERTY keyboard, set the octave so A plays C1.' },
-    { id: 'bitwig', name: 'Bitwig Studio', oct: -2, binds: fromLayout(HOME),
-      tip: 'Drum Machine starts at C1 and its kits follow General MIDI. For the computer keyboard, set the octave so A plays C1.' },
-    { id: 'reaper', name: 'REAPER', oct: -1, binds: fromLayout(TRACKER),
-      tip: 'Most drum plugins follow General MIDI. REAPER calls note 36 “C2”. In the Virtual MIDI Keyboard (Alt+B), set the octave so Z plays C2.' },
-    { id: 'custom', name: 'Custom binds', short: 'Custom', oct: -2, binds: null,
+      tip: 'The pad’s own map: General MIDI notes on channel 10. The keys sit where the pads are: 2 3 4 for the toms, 8 9 0 for the cymbals, V and N for snare and kick.' },
+    { id: 'ableton', name: 'Ableton Live', oct: -2,
+      tip: 'A Drum Rack starts at C1 on the bottom-left pad and its kits follow General MIDI, so every Handpad pad lands on the matching drum.' },
+    { id: 'fl', name: 'FL Studio', oct: 0,
+      tip: 'FPC’s default layout uses General MIDI notes. FL calls note 36 “C3”, so its note names read two octaves higher than most DAWs.' },
+    { id: 'logic', name: 'Logic Pro', oct: -2,
+      tip: 'Drum Kit Designer and Drum Machine Designer follow General MIDI: kick on C1, ride on D♯2.' },
+    { id: 'garageband', name: 'GarageBand', oct: -2,
+      tip: 'Drummer and the drum kits follow General MIDI: kick on C1, ride on D♯2.' },
+    { id: 'protools', name: 'Pro Tools', oct: -2,
+      tip: 'Most drum instruments follow General MIDI (kick on C1). Check the tom notes if your kit has more than three toms.' },
+    { id: 'cubase', name: 'Cubase', oct: -2,
+      tip: 'Groove Agent kits follow General MIDI: kick on C1, ride on D♯2.' },
+    { id: 'studioone', name: 'Studio One', oct: -2,
+      tip: 'Impact XT starts at C1 and its kits follow General MIDI.' },
+    { id: 'bitwig', name: 'Bitwig Studio', oct: -2,
+      tip: 'Drum Machine starts at C1 and its kits follow General MIDI.' },
+    { id: 'reaper', name: 'REAPER', oct: -1,
+      tip: 'Most drum plugins follow General MIDI. REAPER calls note 36 “C2”.' },
+    { id: 'custom', name: 'Custom binds', short: 'Custom', oct: -2,
       tip: 'Your own map. Press Learn next to a drum, then hit a key or a pad.' },
   ];
+  DAWS.forEach((d) => { d.binds = d.id === 'custom' ? null : HANDPAD; });
   const daw = (id) => DAWS.find((d) => d.id === id) || DAWS[0];
 
   const NAMES = ['C', 'C♯', 'D', 'D♯', 'E', 'F', 'F♯', 'G', 'G♯', 'A', 'A♯', 'B'];
@@ -78,13 +79,15 @@
   function use(s) {
     settings = s;
     const d = daw(s.daw);
-    map = JSON.parse(JSON.stringify(d.id === 'custom' ? (s.custom || DAWS[0].binds) : d.binds));
+    map = JSON.parse(JSON.stringify(d.id === 'custom' ? (s.custom || HANDPAD) : d.binds));
     DRUMS.forEach((dr) => { if (!map[dr.id]) map[dr.id] = { key: null, note: dr.note }; });
   }
   const bind = (id) => map[id] || { key: null, note: null };
   const keyFor = (id) => keyLabel(bind(id).key);
-  const drumForKey = (k) => DRUMS.find((d) => map[d.id] && map[d.id].key === k);
+  const drumForKey = (k) => k ? DRUMS.find((d) => map[d.id] && map[d.id].key === k) : null;
   const drumForNote = (n) => DRUMS.find((d) => map[d.id] && map[d.id].note === n);
+  // the key printed on a physical key, whatever the layout (AZERTY's 2 key types "é"): Digit2 → "2", KeyV → "v"
+  const codeKey = (code) => /^Digit\d$/.test(code || '') ? code.slice(5) : /^Key[A-Z]$/.test(code || '') ? code.slice(3).toLowerCase() : null;
 
   // ---------- input ----------
   const listeners = new Set();
@@ -109,8 +112,8 @@
       const f = learner; learner = null; f({ key: k });
       return;
     }
-    if (e.repeat) { if (drumForKey(k)) e.preventDefault(); return; }
-    const d = drumForKey(k);
+    const d = drumForKey(k) || drumForKey(codeKey(e.code));
+    if (e.repeat) { if (d) e.preventDefault(); return; }
     if (d) { e.preventDefault(); e.stopImmediatePropagation(); emit(d.id, 100, 'key'); }
   }, true);
 
@@ -172,7 +175,7 @@
   }
 
   window.Kit = {
-    DRUMS, DAWS, byId, byCh, daw, noteName, keyLabel, RESERVED,
+    DRUMS, DAWS, HANDPAD, byId, byCh, byPad, daw, noteName, keyLabel, RESERVED,
     use, bind, keyFor, drumForKey, drumForNote,
     on: (f) => { listeners.add(f); return () => listeners.delete(f); },
     onStatus: (f) => { statusListeners.add(f); return () => statusListeners.delete(f); },

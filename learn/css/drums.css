@@ -33,20 +33,27 @@
 .ltext kbd.bind { margin: 0 2px; }
 @media (hover: none) { kbd.bind, .keyprev kbd, .fchip kbd { display: inline-grid; } }
 
-/* the on-screen kit */
-.kit { width: 100%; max-width: 460px; align-self: center; user-select: none; -webkit-user-select: none; touch-action: manipulation; }
+/* the on-screen kit: the Handpad, pads where the real ones are (SVG units: the viewBox is 860 wide) */
+.kit { flex: none; width: 100%; max-width: 600px; align-self: center; user-select: none; -webkit-user-select: none; touch-action: manipulation; }
 .kitsvg { display: block; width: 100%; height: auto; overflow: visible; }
+.kit-body { fill: rgba(255, 255, 255, .035); stroke: rgba(255, 255, 255, .1); stroke-width: 2; }
+.kit-mark { font: 800 22px var(--display); letter-spacing: .45em; fill: rgba(255, 255, 255, .14); pointer-events: none; }
 .pad { cursor: pointer; transition: opacity .2s; outline: none; }
 .pad .glow { fill: var(--c); opacity: 0; }
 .pad.lit .glow { opacity: .22; animation: padpulse 1.6s ease-in-out infinite; }
 @keyframes padpulse { 50% { opacity: .08; } }
 .pad.dim { opacity: .38; }
-.pad .head { transform-box: fill-box; transform-origin: center; }
-.pad .k { font: 800 17px var(--display); fill: #15122b; pointer-events: none; }
-.pad .n { font: 700 8.5px var(--body); fill: rgba(21, 18, 43, .75); pointer-events: none; letter-spacing: .02em; }
-.pad.hit .head { animation: padhit .22s ease-out; }
+.pad .face { transform-box: fill-box; transform-origin: center; }
+.pad text { pointer-events: none; }
+.pad .k { font: 800 36px var(--display); fill: #15122b; }
+.pad.big .k { font-size: 46px; }
+.pad .n { font: 700 15px var(--body); fill: rgba(21, 18, 43, .75); letter-spacing: .02em; }
+.pad.big .n { font-size: 17px; }
+.pad .num { font: 800 14px var(--body); fill: rgba(21, 18, 43, .45); }
+@media (max-width: 480px) { .pad .n { display: none; } .pad .k { font-size: 40px; } .pad.big .k { font-size: 52px; } }
+.pad.hit .face { animation: padhit .22s ease-out; }
 .pad.hit .glow { animation: padflash .3s ease-out; }
-@keyframes padhit { 0% { transform: scale(.9) translateY(3px); filter: brightness(1.35); } 100% { transform: none; filter: none; } }
+@keyframes padhit { 0% { transform: translateY(6px) scale(.96); filter: brightness(1.3); } 100% { transform: none; filter: none; } }
 @keyframes padflash { 0% { opacity: .75; } 100% { opacity: 0; } }
 
 /* card visuals: drum grid and beat counter */
@@ -94,6 +101,32 @@
 .exres-head span { font: 800 18px var(--display); }
 .extip { font-size: 14px; color: #e6e0ff; }
 .exres .tile strong { font-size: 18px; padding: 8px 4px; }
+.ghost.hint { border-color: var(--mint); color: #c9ffe6; box-shadow: 0 0 0 3px rgba(61, 220, 151, .15); }
+.row-center { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; }
+.kit.kit-small { max-width: 380px; }
+
+/* practice loop */
+.pr-tempo { display: flex; flex-wrap: wrap; align-items: center; gap: 14px 18px; padding: 12px 14px; border-radius: 16px; background: var(--bg-2); border: 2px solid var(--line); }
+.pr-dial { display: flex; align-items: center; gap: 10px; }
+.pr-bpm { display: flex; flex-direction: column; align-items: center; min-width: 64px; line-height: 1; }
+.pr-bpm b { font: 800 34px var(--display); color: var(--yellow); font-variant-numeric: tabular-nums; }
+.pr-bpm small { font: 700 11px var(--body); letter-spacing: .12em; color: var(--mute); margin-top: 2px; }
+.pr-side { flex: 1 1 220px; display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.pr-meter { position: relative; height: 10px; border-radius: 99px; background: rgba(255, 255, 255, .1); overflow: hidden; }
+.pr-meter i { position: absolute; inset: 0 auto 0 0; border-radius: 99px; background: var(--yellow); transition: width .3s ease; }
+.pr-meter i.at { background: var(--mint); }
+.pr-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; font-size: 13.5px; }
+.pr-badge { font-weight: 700; color: var(--mute); }
+.pr-badge.on { color: var(--mint); }
+.pr-best { color: var(--mute); }
+.pr-auto { margin-left: auto; }
+.pr-auto:not(.on) { opacity: .6; }
+.pr-msg { font: 700 16px var(--display); min-height: 22px; }
+.pr-log { display: flex; flex-wrap: wrap; gap: 6px; min-height: 0; }
+.pr-log span { padding: 4px 10px; border-radius: 99px; font: 700 12.5px var(--body); font-variant-numeric: tabular-nums; background: rgba(255, 255, 255, .06); border: 1px solid var(--line); }
+.pr-log span.ok { color: var(--mint); border-color: rgba(61, 220, 151, .5); }
+.pr-log span.meh { color: var(--yellow); border-color: rgba(255, 210, 63, .45); }
+.pr-log span.no { color: var(--coral); border-color: rgba(255, 107, 107, .45); }
 
 /* find the drum / ear */
 .find, .ear { display: flex; flex-direction: column; gap: 14px; align-items: center; padding: 8px 0; }
@@ -140,6 +173,7 @@ input[type=range] { width: 100%; accent-color: var(--yellow); height: 28px; }
 .bhead { background: var(--bg-2); font: 700 11px var(--body); letter-spacing: .1em; text-transform: uppercase; color: var(--mute); }
 .bname { display: flex; align-items: center; gap: 8px; font-weight: 700; min-width: 0; }
 .bname .dot { width: 12px; height: 12px; border-radius: 50%; background: var(--c); flex: none; }
+.bname .bpad { font: 800 12px var(--display); font-style: normal; color: var(--mute); min-width: 10px; }
 .bnote { font-size: 13.5px; color: var(--mute); font-variant-numeric: tabular-nums; }
 .brow.learning { background: rgba(255, 210, 63, .12); }
 .brow.learning .bnote::after { content: ' · press a key or hit a pad…'; color: var(--yellow); font-weight: 700; }

@@ -1,18 +1,22 @@
 'use strict';
 
 // ---------------------------------------------------------------------------
-// Pad definitions. Notes follow the General MIDI drum map, so the hardware,
-// this app and any DAW agree by default. Users can remap with "Learn".
+// The Handpad's eight pads, numbered like the physical pad. Notes follow the
+// General MIDI drum map, so the hardware, this app and any DAW agree by
+// default. Users can remap with "Learn".
+// The keys mirror the pad: 2 3 4 = toms (top left), 8 9 0 = cymbals (top
+// right), V N = snare and kick (the two big pads at the bottom).
+// at: x, y, width, height on the pad's 860 × 396 outline (same as Backbeat).
 // ---------------------------------------------------------------------------
 const PADS = [
-  { id: 'kick',  name: 'Kick',       note: 36, key: 'a', hue: 15 },
-  { id: 'snare', name: 'Snare',      note: 38, key: 's', hue: 40 },
-  { id: 'chh',   name: 'Closed Hat', note: 42, key: 'd', hue: 60, choke: 'hat' },
-  { id: 'ohh',   name: 'Open Hat',   note: 46, key: 'f', hue: 80, choke: 'hat' },
-  { id: 'tomL',  name: 'Low Tom',    note: 45, key: 'j', hue: 190 },
-  { id: 'tomH',  name: 'High Tom',   note: 48, key: 'k', hue: 210 },
-  { id: 'clap',  name: 'Clap',       note: 39, key: 'l', hue: 280 },
-  { id: 'crash', name: 'Crash',      note: 49, key: ';', hue: 320 },
+  { id: 'tom1',  num: 1, name: 'Tom 1',      note: 48, key: '2', hue: 255, at: [24, 44, 106, 78] },
+  { id: 'tom2',  num: 2, name: 'Tom 2',      note: 45, key: '3', hue: 320, at: [144, 24, 106, 78] },
+  { id: 'floor', num: 3, name: 'Floor Tom',  note: 43, key: '4', hue: 30,  at: [273, 53, 106, 78] },
+  { id: 'snare', num: 4, name: 'Snare',      note: 38, key: 'v', hue: 48,  at: [257, 256, 138, 110] },
+  { id: 'kick',  num: 5, name: 'Kick',       note: 36, key: 'n', hue: 0,   at: [465, 256, 138, 110] },
+  { id: 'open',  num: 6, name: 'Open Hat',   note: 46, key: '8', hue: 155, at: [481, 53, 106, 78], choke: 'hat' },
+  { id: 'hat',   num: 7, name: 'Closed Hat', note: 42, key: '9', hue: 195, at: [610, 24, 106, 78], choke: 'hat' },
+  { id: 'ride',  num: 8, name: 'Ride',       note: 51, key: '0', hue: 85,  at: [730, 44, 106, 78] },
 ];
 
 const STORAGE_KEY = 'drumpads.v1';
@@ -29,7 +33,8 @@ function defaultState() {
 function loadState() {
   try {
     const saved = JSON.parse(localStorage.getItem(STORAGE_KEY));
-    if (saved) return { ...defaultState(), ...saved };
+    // keep learned notes for pads that still exist (the old kit had other pads)
+    if (saved) return { ...defaultState(), ...saved, notes: Object.fromEntries(PADS.map(p => [p.id, saved.notes?.[p.id] ?? p.note])) };
   } catch {}
   return defaultState();
 }
@@ -95,59 +100,69 @@ function filter(type, freq, q = 1) {
   return f;
 }
 
-// Six detuned square waves, the classic 808 cymbal/hat source.
-function metal(t, dur) {
+// Six detuned square waves, the classic 808 cymbal/hat source. mult shifts the cluster.
+function metal(t, dur, mult = 1.5) {
   const sum = ctx.createGain();
   sum.gain.value = 1 / 6;
   for (const f of [205.3, 304.4, 369.6, 522.7, 540, 800]) {
-    osc('square', f * 1.5, t, dur).connect(sum);
+    osc('square', f * mult, t, dur).connect(sum);
   }
   return sum;
 }
 
-function tom(from, to) {
+// A tuned tom: the head starts a little sharp, settles on its note, then sags.
+function tom(f, len) {
   return (t, a, out) => {
-    const o = osc('sine', from, t, 0.6);
-    o.frequency.exponentialRampToValueAtTime(to, t + 0.3);
-    o.connect(env(t, a, 0.5)).connect(out);
-    noise(t, 0.03).connect(filter('lowpass', 3000)).connect(env(t, a * 0.2, 0.03)).connect(out);
+    const o = osc('sine', f * 1.5, t, len + 0.1);
+    o.frequency.exponentialRampToValueAtTime(f, t + 0.035);
+    o.frequency.exponentialRampToValueAtTime(f * 0.82, t + len);
+    o.connect(env(t, a * 0.95, len)).connect(out);
+    const o2 = osc('sine', f * 2.6, t, len * 0.5);
+    o2.frequency.exponentialRampToValueAtTime(f * 1.6, t + 0.05);
+    o2.connect(env(t, a * 0.22, len * 0.35)).connect(out);
+    noise(t, 0.04).connect(filter('lowpass', 2600)).connect(env(t, a * 0.22, 0.035)).connect(out);
   };
 }
 
+// The Handpad kit. Same voices as Backbeat (learn/js/audio.js): keep them in sync.
 const VOICES = {
   kick(t, a, out) {
-    const o = osc('sine', 150, t, 0.6);
-    o.frequency.exponentialRampToValueAtTime(42, t + 0.15);
-    o.connect(env(t, a, 0.5)).connect(out);
-    noise(t, 0.02).connect(filter('highpass', 2000)).connect(env(t, a * 0.3, 0.015)).connect(out);
+    const o = osc('sine', 165, t, 0.7);
+    o.frequency.exponentialRampToValueAtTime(55, t + 0.06);
+    o.frequency.exponentialRampToValueAtTime(44, t + 0.4);
+    o.connect(env(t, a, 0.55)).connect(out);
+    const c = osc('triangle', 1100, t, 0.03);
+    c.frequency.exponentialRampToValueAtTime(240, t + 0.02);
+    c.connect(env(t, a * 0.3, 0.022)).connect(out);
+    noise(t, 0.02).connect(filter('bandpass', 3200, 0.8)).connect(env(t, a * 0.2, 0.012)).connect(out);
   },
   snare(t, a, out) {
-    noise(t, 0.3).connect(filter('highpass', 1200)).connect(env(t, a * 0.8, 0.2)).connect(out);
-    const o = osc('triangle', 190, t, 0.2);
-    o.frequency.exponentialRampToValueAtTime(160, t + 0.1);
-    o.connect(env(t, a * 0.6, 0.1)).connect(out);
-  },
-  chh(t, a, out) {
-    metal(t, 0.1).connect(filter('bandpass', 10000)).connect(filter('highpass', 7000))
-      .connect(env(t, a * 0.7, 0.06)).connect(out);
-  },
-  ohh(t, a, out) {
-    metal(t, 0.6).connect(filter('bandpass', 10000)).connect(filter('highpass', 7000))
-      .connect(env(t, a * 0.7, 0.45)).connect(out);
-  },
-  tomL: tom(140, 85),
-  tomH: tom(220, 150),
-  clap(t, a, out) {
-    for (let i = 0; i < 3; i++) {
-      const ti = t + i * 0.011;
-      noise(ti, 0.02).connect(filter('bandpass', 1300, 1.5)).connect(env(ti, a * 0.8, 0.02)).connect(out);
+    for (const [f, g, d] of [[180, 0.55, 0.12], [330, 0.28, 0.07]]) {
+      const o = osc('triangle', f * 1.2, t, d + 0.05);
+      o.frequency.exponentialRampToValueAtTime(f, t + 0.025);
+      o.connect(env(t, a * g, d)).connect(out);
     }
-    const tail = t + 0.033;
-    noise(tail, 0.25).connect(filter('bandpass', 1300, 1.5)).connect(env(tail, a * 0.6, 0.18)).connect(out);
+    noise(t, 0.35).connect(filter('bandpass', 5200, 0.6)).connect(env(t, a * 0.62, 0.22)).connect(out);
+    noise(t, 0.12).connect(filter('highpass', 1200)).connect(env(t, a * 0.35, 0.09)).connect(out);
   },
-  crash(t, a, out) {
-    metal(t, 1.7).connect(filter('highpass', 5000)).connect(env(t, a * 0.5, 1.5)).connect(out);
-    noise(t, 1.7).connect(filter('highpass', 6000)).connect(env(t, a * 0.35, 1.2)).connect(out);
+  hat(t, a, out) {
+    metal(t, 0.12).connect(filter('highpass', 7000)).connect(filter('bandpass', 10000))
+      .connect(env(t, a * 0.75, 0.055)).connect(out);
+    noise(t, 0.04).connect(filter('highpass', 8500)).connect(env(t, a * 0.22, 0.03)).connect(out);
+  },
+  open(t, a, out) {
+    metal(t, 1.1).connect(filter('highpass', 7000)).connect(filter('bandpass', 10000))
+      .connect(env(t, a * 0.75, 0.8)).connect(out);
+    noise(t, 0.8).connect(filter('highpass', 8000)).connect(env(t, a * 0.2, 0.5)).connect(out);
+  },
+  tom1: tom(210, 0.42),
+  tom2: tom(155, 0.52),
+  floor: tom(100, 0.72),
+  ride(t, a, out) {
+    metal(t, 0.6, 2.2).connect(filter('bandpass', 3600, 1.8)).connect(env(t, a * 0.8, 0.45)).connect(out);
+    for (const [f, d] of [[2350, 1.3], [3480, 0.9]]) osc('sine', f, t, d + 0.1).connect(env(t, a * 0.07, d)).connect(out);
+    metal(t, 2.4).connect(filter('highpass', 5500)).connect(env(t, a * 0.3, 2.1)).connect(out);
+    noise(t, 0.015).connect(filter('highpass', 5000)).connect(env(t, a * 0.2, 0.01)).connect(out);
   },
 };
 
@@ -312,7 +327,9 @@ document.addEventListener('keydown', e => {
     return;
   }
   if (e.repeat || e.ctrlKey || e.metaKey || e.altKey) return;
-  const pad = PADS.find(p => p.key === e.key.toLowerCase());
+  // match the typed key, else the physical key (Shift+2 types "@", AZERTY's 2 key types "é")
+  const code = /^Digit\d$/.test(e.code) ? e.code.slice(5) : /^Key[A-Z]$/.test(e.code) ? e.code.slice(3).toLowerCase() : null;
+  const pad = PADS.find(p => p.key === e.key.toLowerCase()) || PADS.find(p => p.key === code);
   if (!pad) return;
   const vel = e.shiftKey ? 127 : 96;
   playPad(pad, vel);
@@ -329,12 +346,15 @@ function renderPads() {
   container.replaceChildren();
   for (const pad of PADS) {
     const el = document.createElement('div');
-    el.className = 'pad' + (learningPadId === pad.id ? ' learning' : '');
+    el.className = 'pad' + (learningPadId === pad.id ? ' learning' : '') + (pad.at[3] > 90 ? ' big' : '');
     el.style.setProperty('--hue', pad.hue);
+    // placed where it sits on the physical pad
+    const [x, y, w, h] = pad.at;
+    Object.assign(el.style, { left: `${x / 8.6}%`, top: `${y / 3.96}%`, width: `${w / 8.6}%`, height: `${h / 3.96}%` });
 
     const name = document.createElement('div');
     name.className = 'name';
-    name.textContent = pad.name;
+    name.innerHTML = `<span class="num">${pad.num}</span> ${pad.name}`;
 
     const sample = document.createElement('div');
     sample.className = 'sample';

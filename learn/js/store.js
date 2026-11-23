@@ -3,10 +3,11 @@
   'use strict';
   const KEY = 'backbeat.v1';
   const DEF = () => ({
-    v: 1, onboarded: false, head: 1,          // head: how many chapters are open from the start
+    v: 2, onboarded: false, head: 1,          // head: how many chapters are open from the start
     lessons: {},                              // id -> { best (0-100), stars, plays }
+    practice: {},                             // groove key -> { best (fastest BPM at 90 %+), dialed (hit the target tempo) }
     xp: 0, trophies: [], opened: [], seen: [],
-    days: [],                                 // ISO dates with at least one lesson played
+    days: [],                                 // ISO dates with at least one lesson or practice played
     settings: { daw: 'handpad', custom: null, offset: 0, volume: 0.8, click: 0.6, guide: true },
   });
   let cache = null;
@@ -16,7 +17,29 @@
     try { s = JSON.parse(localStorage.getItem(KEY)); } catch (e) { s = null; }
     const d = DEF();
     cache = s ? Object.assign(d, s, { settings: Object.assign(d.settings, s.settings || {}) }) : d;
+    if (cache.v < 2) { migrate(cache); save(); }
     return cache;
+  }
+  // v1 → v2: the 8-pad Handpad kit and the shorter lessons. Keep lessons that still exist, recount trophies,
+  // and drop custom binds made for the old 7-drum kit.
+  // old lessons that were merged into new ones: their records carry over (best of both)
+  const MERGED = { kick: 'kicksnare', snare: 'kicksnare', backbeat: 'kicksnare', hat: 'hihat', count: 'hihat', eighths: 'hihat',
+    hatsnare: 'rock', keepgoing: 'kickmoves', crash: 'ride', fillcrash: 'land' };
+  function migrate(s) {
+    const L = window.Lessons;
+    Object.keys(s.lessons).forEach((id) => {
+      if (L.byId(id)) return;
+      const to = MERGED[id], old = s.lessons[id], cur = to && s.lessons[to];
+      if (to) s.lessons[to] = { best: Math.max(old.best, cur ? cur.best : 0), stars: Math.max(old.stars, cur ? cur.stars : 0), plays: old.plays + (cur ? cur.plays : 0) };
+      delete s.lessons[id];
+    });
+    s.trophies = L.CHAPTERS.map((ch, ci) => (ch.ids.every((id) => s.lessons[id]) ? ci : -1)).filter((ci) => ci >= 0);
+    if (s.settings.custom && !s.settings.custom.ride) {
+      s.settings.custom = null;
+      if (s.settings.daw === 'custom') s.settings.daw = 'handpad';
+    }
+    s.practice = s.practice || {};
+    s.v = 2;
   }
   function save() { try { localStorage.setItem(KEY, JSON.stringify(cache)); } catch (e) { /* private mode: keep it in memory */ } }
   function update(fn) { const s = load(); fn(s); save(); return s; }
@@ -85,8 +108,22 @@
     return { stars, xp: xp + (trophy !== null ? 60 : 0), trophy, first, levelUp: lv.level > lvBefore ? lv : null };
   }
 
+  // Save a practice round. Dialing a groove in (90 %+ at its target tempo or faster) the first time is worth 15 XP.
+  function practiced(key, bpm, acc, target) {
+    let dialed = false;
+    update((s) => {
+      const p = s.practice[key] || { best: 0, dialed: false };
+      if (acc >= 90) p.best = Math.max(p.best, bpm);
+      if (!p.dialed && acc >= 90 && bpm >= target) { p.dialed = dialed = true; s.xp += 15; }
+      s.practice[key] = p;
+      if (!s.days.includes(today())) s.days.push(today());
+    });
+    return { dialed, rec: load().practice[key] };
+  }
+
   window.Store = {
-    load, save, update, chapters, markSeen, finishLesson, levelInfo, streak,
+    load, save, update, chapters, markSeen, finishLesson, levelInfo, streak, practiced,
+    practiceOf: (key) => load().practice[key] || null,
     todayCount: () => { const d = load().daily; return d && d.date === today() ? d.n : 0; },
     reset: () => { const keep = load().settings; cache = DEF(); cache.settings = keep; save(); },
   };
