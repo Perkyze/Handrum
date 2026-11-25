@@ -57,6 +57,10 @@ web/                    the app (plain HTML/JS, no build step)
 learn/                  Backbeat: a game that teaches drums from zero (see learn/README.md)
 firmware/drum_pads/
   drum_pads.ino         Arduino sketch for the pads
+firmware/handpad_buttons/
+  handpad_buttons.ino   8 tactile switches -> the same MIDI over serial (wiring in the header)
+tools/
+  serial-keys.ps1       turns the board's serial MIDI into key presses (2 3 4 V N 8 9 0) in any program
 ```
 
 ## Running the app
