@@ -1039,6 +1039,19 @@
       return h('label', { class: 'srow' }, h('span', null, label), r);
     };
 
+    // play view: which way the note highway runs
+    const VIEWS = [
+      ['horizontal', 'Horizontal', 'Gems slide right to left. Lanes top to bottom: 2 3 4 V N 8 9 0.'],
+      ['vertical', 'Vertical', 'Gems fall. Lanes left to right like your hands on the keys: 2 3 4 V, then N 8 9 0.'],
+    ];
+    const viewOpts = h('div', { class: 'viewopts', role: 'radiogroup', 'aria-label': 'Play view' }, VIEWS.map(([v, label, sub]) => {
+      const on = (st.settings.view || 'horizontal') === v;
+      return h('button', { class: 'viewopt' + (on ? ' on' : ''), role: 'radio', 'aria-checked': String(on), 'data-view': v, onclick: (e) => {
+        S.update((s) => { s.settings.view = v; });
+        viewOpts.querySelectorAll('.viewopt').forEach((b) => { const sel = b === e.currentTarget; b.classList.toggle('on', sel); b.setAttribute('aria-checked', String(sel)); });
+      } }, h('span', { html: R.viewPic(v) }), h('b', null, label), h('small', null, sub));
+    }));
+
     let armed = false;
     const resetBtn = h('button', { class: 'ghost danger', onclick: () => {
       if (!armed) { armed = true; resetBtn.textContent = 'Tap again to erase all progress'; later(() => { armed = false; resetBtn.textContent = 'Reset progress'; }, 3000); return; }
@@ -1054,6 +1067,10 @@
         table,
         h('div', { class: 'row-end' }, h('span', { class: 'mute small' }, daw.id === 'custom' ? 'Press Learn, then a key or a pad.' : 'Defaults are a starting point. Press Learn on any drum to make your own (switches to Custom).'),
           daw.id === 'custom' ? resetBinds : null)),
+      h('section', { class: 'card' },
+        h('h3', null, 'Play view'),
+        h('p', { class: 'mute small' }, 'Which way the notes travel in play-along steps. You can also switch with the buttons above the lanes while you play.'),
+        viewOpts),
       h('section', { class: 'card' },
         h('h3', null, 'Connect your pad'),
         h('p', { class: 'mute small' }, 'Our ESP32 DevKit boards send MIDI over serial. A pad with USB or Bluetooth MIDI shows up under MIDI. Chrome or Edge.'),

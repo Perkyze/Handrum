@@ -8,7 +8,8 @@
     practice: {},                             // groove key -> { best (fastest BPM at 90 %+), dialed (hit the target tempo) }
     xp: 0, trophies: [], opened: [], seen: [],
     days: [],                                 // ISO dates with at least one lesson or practice played
-    settings: { daw: 'handpad', custom: null, offset: 0, volume: 0.8, click: 0.6, guide: true },
+    // view: how the note highway runs: 'horizontal' (gems slide right to left) or 'vertical' (gems fall into lanes laid out like your hands)
+    settings: { daw: 'handpad', custom: null, offset: 0, volume: 0.8, click: 0.6, guide: true, view: 'horizontal' },
   });
   let cache = null;
   function load() {

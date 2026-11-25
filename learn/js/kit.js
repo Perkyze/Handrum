@@ -20,16 +20,18 @@
 
   // The Handpad's eight pads. Notes follow General MIDI (channel 10), like the Handpad firmware.
   // ch: the one-letter code used in lesson patterns. pad: the number printed on the physical pad (1–8).
-  // Listed top to bottom like drum notation (cymbals, toms, snare, kick): that's the lane order in the game.
+  // Listed in keyboard order, left hand to right hand: 2 3 4 V | N 8 9 0 (the same order as the pad numbers).
+  // That's the lane order in the game: top to bottom when the highway runs sideways, left to right when it runs down.
+  // hand: the hand that plays it on the keyboard. Ring, middle and index fingers rest on the number row, thumbs on V and N.
   const DRUMS = [
-    { id: 'ride', ch: 'r', pad: 8, name: 'Ride', note: 51, color: '#b6e35a', dark: '#7da52c', cym: true },
-    { id: 'open', ch: 'o', pad: 6, name: 'Open hi-hat', short: 'Open hat', note: 46, color: '#3ddc97', dark: '#1d9a66', cym: true },
-    { id: 'hat', ch: 'h', pad: 7, name: 'Closed hi-hat', short: 'Hi-hat', note: 42, color: '#4cc9f0', dark: '#2489b0', cym: true },
-    { id: 'tom1', ch: 't', pad: 1, name: 'Tom 1', note: 48, color: '#9b7bff', dark: '#6a4fd0' },
-    { id: 'tom2', ch: 'm', pad: 2, name: 'Tom 2', note: 45, color: '#ff7ac6', dark: '#c4458f' },
-    { id: 'snare', ch: 's', pad: 4, name: 'Snare', note: 38, color: '#ffd23f', dark: '#c9960a' },
-    { id: 'floor', ch: 'f', pad: 3, name: 'Floor tom', short: 'Floor', note: 43, color: '#ff9f43', dark: '#c66e17' },
-    { id: 'kick', ch: 'k', pad: 5, name: 'Kick', note: 36, color: '#ff6b6b', dark: '#c44343' },
+    { id: 'tom1', ch: 't', pad: 1, hand: 'L', name: 'Tom 1', note: 48, color: '#9b7bff', dark: '#6a4fd0' },
+    { id: 'tom2', ch: 'm', pad: 2, hand: 'L', name: 'Tom 2', note: 45, color: '#ff7ac6', dark: '#c4458f' },
+    { id: 'floor', ch: 'f', pad: 3, hand: 'L', name: 'Floor tom', short: 'Floor', note: 43, color: '#ff9f43', dark: '#c66e17' },
+    { id: 'snare', ch: 's', pad: 4, hand: 'L', name: 'Snare', note: 38, color: '#ffd23f', dark: '#c9960a' },
+    { id: 'kick', ch: 'k', pad: 5, hand: 'R', name: 'Kick', note: 36, color: '#ff6b6b', dark: '#c44343' },
+    { id: 'open', ch: 'o', pad: 6, hand: 'R', name: 'Open hi-hat', short: 'Open hat', note: 46, color: '#3ddc97', dark: '#1d9a66', cym: true },
+    { id: 'hat', ch: 'h', pad: 7, hand: 'R', name: 'Closed hi-hat', short: 'Hi-hat', note: 42, color: '#4cc9f0', dark: '#2489b0', cym: true },
+    { id: 'ride', ch: 'r', pad: 8, hand: 'R', name: 'Ride', note: 51, color: '#b6e35a', dark: '#7da52c', cym: true },
   ];
   const byId = (id) => DRUMS.find((d) => d.id === id);
   const byCh = (c) => DRUMS.find((d) => d.ch === c);

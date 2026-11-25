@@ -69,5 +69,18 @@
     return '<div class="beats">' + [1, 2, 3, 4].map((n) => '<i data-b="' + (n - 1) + '">' + n + '</i>').join('') + '</div>';
   }
 
-  window.Render = { kit, grid, beats, esc, PADS };
+  // A little picture of each highway direction, in the drum colors: lanes stacked with the hit line on the left,
+  // or side by side (left hand, gap, right hand) with the hit line near the bottom.
+  function viewPic(view) {
+    let s = '<svg class="viewpic" viewBox="0 0 72 48" aria-hidden="true">';
+    K.DRUMS.forEach((d, i) => {
+      s += view === 'vertical'
+        ? '<rect x="' + (2 + i * 8 + (d.hand === 'R' ? 4 : 0)) + '" y="3" width="6" height="42" rx="2" fill="' + d.color + '"/>'
+        : '<rect x="3" y="' + (4 + i * 5) + '" width="66" height="3.4" rx="1.5" fill="' + d.color + '"/>';
+    });
+    s += view === 'vertical' ? '<rect x="0" y="35" width="72" height="2.5" rx="1" fill="#fff"/>' : '<rect x="13" y="1" width="2.5" height="46" rx="1" fill="#fff"/>';
+    return s + '</svg>';
+  }
+
+  window.Render = { kit, grid, beats, viewPic, esc, PADS };
 })();
