@@ -1,0 +1,10 @@
+{
+  "name": "Soufflez un coup · Borne d’écoconduite",
+  "short_name": "Écoconduite",
+  "lang": "fr",
+  "start_url": "./index.html",
+  "display": "fullscreen",
+  "orientation": "landscape",
+  "background_color": "#F6F5F0",
+  "theme_color": "#F6F5F0"
+}
