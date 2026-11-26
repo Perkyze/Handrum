@@ -36,13 +36,19 @@ struct Pad {
 // Wi-Fi/BLE is on: GPIO 36 (VP), 39 (VN), 34, 35, 32, 33. That's 6 pads max;
 // beyond that, add an analog multiplexer (e.g. CD74HC4067).
 // Only list pads that are wired: an unconnected pin floats and fires random hits.
+//
+// The Handpad kit (pad number on the product -> General MIDI note):
+//   1 tom 1 = 48   2 tom 2 = 45   3 floor tom = 43   4 snare = 38
+//   5 kick = 36    6 open hi-hat = 46   7 closed hi-hat = 42   8 ride = 51
+// One DevKit reads 6 of them; the last two need a mux or a second board.
 Pad pads[] = {
-  { 36, 36, 150 },  // GPIO36 (VP) -> kick
-  { 39, 38, 150 },  // GPIO39 (VN) -> snare
-  { 34, 42, 150 },  // GPIO34      -> closed hat
-  { 35, 46, 150 },  // GPIO35      -> open hat
-  // { 32, 45, 150 },  // GPIO32   -> low tom
-  // { 33, 49, 150 },  // GPIO33   -> crash
+  { 36, 36, 150 },  // GPIO36 (VP) -> pad 5, kick
+  { 39, 38, 150 },  // GPIO39 (VN) -> pad 4, snare
+  { 34, 42, 150 },  // GPIO34      -> pad 7, closed hi-hat
+  { 35, 46, 150 },  // GPIO35      -> pad 6, open hi-hat
+  // { 32, 48, 150 },  // GPIO32   -> pad 1, tom 1
+  // { 33, 51, 150 },  // GPIO33   -> pad 8, ride
+  // tom 2 (45) and floor tom (43): CD74HC4067 mux or a second board
 };
 const uint8_t NUM_PADS = sizeof(pads) / sizeof(pads[0]);
 

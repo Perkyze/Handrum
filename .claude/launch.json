@@ -1,0 +1,17 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "drumtrail",
+      "runtimeExecutable": "powershell",
+      "runtimeArgs": ["-NoProfile", "-ExecutionPolicy", "Bypass", "-File", "learn/serve.ps1"],
+      "port": 8140
+    },
+    {
+      "name": "padapp",
+      "runtimeExecutable": "powershell",
+      "runtimeArgs": ["-NoProfile", "-ExecutionPolicy", "Bypass", "-File", "learn/serve.ps1", "-Port", "8150", "-Root", "web"],
+      "port": 8150
+    }
+  ]
+}
